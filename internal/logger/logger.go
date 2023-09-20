@@ -31,7 +31,7 @@ func (l *Logger) Info(msg string, fields ...interface{}) {
 }
 
 func (l *Logger) Printf(msg string, fields ...interface{}) {
-	l.Info(msg, fields)
+	l.Info(msg, fields...)
 }
 
 func initConfig(level string) (zap.Config, error) {
