@@ -1,12 +1,11 @@
 package helpers
 
 import (
-	"fmt"
+	"github.com/erupshis/effective_mobile/internal/logger"
 )
 
-func ExecuteWithLogError(callback func() error) {
+func ExecuteWithLogError(callback func() error, log logger.BaseLogger) {
 	if err := callback(); err != nil {
-		//TODO: add log.
-		fmt.Println("error")
+		log.Info("callback execution finished with error: %v", err)
 	}
 }

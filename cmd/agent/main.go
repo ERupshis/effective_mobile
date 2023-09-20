@@ -23,7 +23,7 @@ func main() {
 
 	//kafka.
 	writer := msgbroker.CreateKafkaProducer(cfg.BrokerAddr, cfg.Topic, log)
-	defer helpers.ExecuteWithLogError(writer.Close)
+	defer helpers.ExecuteWithLogError(writer.Close, log)
 
 	//TODO: need to add goroutine to generate random data.
 	//TODO: need to wrap data in json.
