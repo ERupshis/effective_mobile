@@ -12,7 +12,7 @@ import (
 func main() {
 	cfg := config.Parse()
 
-	writer := msgbroker.CreateKafkaProducer(cfg.BrokerAddr, cfg.Topic, 0)
+	writer := msgbroker.CreateKafkaProducer(cfg.BrokerAddr, cfg.Topic)
 	defer helpers.ExecuteWithLogError(writer.Close)
 
 	//TODO: need to add goroutine to generate random data.

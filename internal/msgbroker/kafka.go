@@ -13,7 +13,7 @@ type KafkaProducer struct {
 }
 
 // CreateKafkaProducer Create writer.
-func CreateKafkaProducer(brokerAddr []string, topic string, partition int) Producer {
+func CreateKafkaProducer(brokerAddr []string, topic string) Producer {
 	producer := &KafkaProducer{
 		kafka.Writer{
 			Addr:                   kafka.TCP(brokerAddr...),
