@@ -23,7 +23,6 @@ func main() {
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "failed to create logger: %v", err)
 	}
-	defer log.Sync()
 
 	//kafka.
 	writer := msgbroker.CreateKafkaProducer(cfg.BrokerAddr, cfg.Topic, log)
