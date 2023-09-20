@@ -4,17 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ERupshis/effective_mobile/internal/helpers"
-	"github.com/ERupshis/effective_mobile/internal/msgbroker"
+	"github.com/erupshis/effective_mobile/internal/helpers"
+	"github.com/erupshis/effective_mobile/internal/msgbroker"
+	"github.com/erupshis/effective_mobile/internal/server/config"
 )
 
 func main() {
-	//TODO envs config.
-	brokerAddr := []string{"localhost:9092"}
-	topic := "FIO"
-	groupID := "group"
+	cfg := config.Parse()
 
-	reader := msgbroker.CreateKafkaConsumer(brokerAddr, topic, groupID)
+	reader := msgbroker.CreateKafkaConsumer(cfg.BrokerAddr, cfg.Topic, cfg.Group)
 	defer helpers.ExecuteWithLogError(reader.Close)
 
 	for {

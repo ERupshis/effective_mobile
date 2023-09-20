@@ -4,16 +4,15 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/ERupshis/effective_mobile/internal/helpers"
-	"github.com/ERupshis/effective_mobile/internal/msgbroker"
+	"github.com/erupshis/effective_mobile/internal/agent/config"
+	"github.com/erupshis/effective_mobile/internal/helpers"
+	"github.com/erupshis/effective_mobile/internal/msgbroker"
 )
 
 func main() {
-	//TODO envs config.
-	brokerAddr := []string{"localhost:9092"}
-	topic := "FIO"
+	cfg := config.Parse()
 
-	writer := msgbroker.CreateKafkaProducer(brokerAddr, topic, 0)
+	writer := msgbroker.CreateKafkaProducer(cfg.BrokerAddr, cfg.Topic, 0)
 	defer helpers.ExecuteWithLogError(writer.Close)
 
 	//TODO: need to add goroutine to generate random data.
