@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/erupshis/effective_mobile/internal/agent/config"
+	"github.com/erupshis/effective_mobile/internal/agent/msggenerator"
 	"github.com/erupshis/effective_mobile/internal/helpers"
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
@@ -25,18 +29,14 @@ func main() {
 	writer := msgbroker.CreateKafkaProducer(cfg.BrokerAddr, cfg.Topic, log)
 	defer helpers.ExecuteWithLogError(writer.Close, log)
 
-	//TODO: need to add goroutine to generate random data.
-	//TODO: need to wrap data in json.
-	// Send a sample message
-	key := "message-key"
-	value := "Hello, Kafka!"
-	err = writer.SendMessage(key, value)
-	if err != nil {
-		log.Info("send message failed: %v", err)
-	}
+	//random names generator.
+	ctxWithCancel, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	fmt.Printf("Message sent: Key=%s, Value=%s\n", key, value)
+	go msggenerator.Run(ctxWithCancel, writer, log)
 
-	ch := make(chan struct{})
-	<-ch
+	// Create a channel to wait for signals (e.g., Ctrl+C) to gracefully exit.
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	<-sigCh
 }
