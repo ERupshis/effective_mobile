@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/erupshis/effective_mobile/internal/datastructs"
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
 )
@@ -44,7 +45,7 @@ func getRandomName() []byte {
 	randomNationality := rand.Intn(2)
 	isRussian := randomNationality == 0
 
-	msg := msgbroker.MessageBody{}
+	msg := datastructs.PersonData{}
 	if isRussian {
 		if isMale {
 			msg.Name = getRandomValueFromSlice(russianFirstNamesMale)

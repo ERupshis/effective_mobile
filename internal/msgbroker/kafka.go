@@ -3,6 +3,7 @@ package msgbroker
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/segmentio/kafka-go"
@@ -46,10 +47,11 @@ func (p *KafkaProducer) Close() error {
 
 type KafkaConsumer struct {
 	*kafka.Reader
+	log logger.BaseLogger
 }
 
 // CreateKafkaConsumer Create reader.
-func CreateKafkaConsumer(brokerAddr []string, topic string, groupID string) Consumer {
+func CreateKafkaConsumer(brokerAddr []string, topic string, groupID string, log logger.BaseLogger) Consumer {
 	readerConfig := kafka.ReaderConfig{
 		Brokers:     brokerAddr,
 		Topic:       topic,
@@ -60,7 +62,25 @@ func CreateKafkaConsumer(brokerAddr []string, topic string, groupID string) Cons
 	}
 
 	reader := kafka.NewReader(readerConfig)
-	return &KafkaConsumer{reader}
+	return &KafkaConsumer{Reader: reader, log: log}
+}
+
+func (c *KafkaConsumer) Listen(ctx context.Context, chMessages chan<- Message) {
+	for {
+		select {
+		case <-ctx.Done():
+			close(chMessages)
+			return
+		default:
+			m, err := c.ReadMessage(context.Background())
+			if err != nil {
+				c.log.Info("read message finished with error: %v. Sleep to retry.", err)
+				time.Sleep(time.Second)
+			}
+			c.log.Info("message received: %s = %s\n", string(m.Key), string(m.Value))
+			chMessages <- Message{Key: m.Key, Value: m.Value}
+		}
+	}
 }
 
 func (c *KafkaConsumer) ReadMessage(ctx context.Context) (Message, error) {

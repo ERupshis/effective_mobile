@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/erupshis/effective_mobile/internal/helpers"
 	"github.com/erupshis/effective_mobile/internal/logger"
@@ -23,18 +25,20 @@ func main() {
 	defer log.Sync()
 
 	//kafka
-	reader := msgbroker.CreateKafkaConsumer(cfg.BrokerAddr, cfg.Topic, cfg.Group)
+	reader := msgbroker.CreateKafkaConsumer(cfg.BrokerAddr, cfg.Topic, cfg.Group, log)
 	defer helpers.ExecuteWithLogError(reader.Close, log)
 
-	for {
-		m, err := reader.ReadMessage(context.Background())
-		if err != nil {
-			break
-		}
-		fmt.Printf("message: %s = %s\n", string(m.Key), string(m.Value))
+	//kafka message reader.
+	ctxWithCancel, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	chMessages := make(chan msgbroker.Message, 10)
+	go reader.Listen(ctxWithCancel, chMessages)
+	for message := range chMessages {
+		fmt.Printf("%s\n", message.Value)
 	}
 
-	//if err := r.Close(); err != nil {
-	//	log.Fatal("failed to close reader:", err)
-	//}
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	<-sigCh
 }
