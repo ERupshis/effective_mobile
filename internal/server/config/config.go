@@ -35,7 +35,7 @@ func checkFlags(config *Config) {
 	config.BrokerAddr = strings.Split(brokers, ",")
 
 	flag.StringVar(&config.Topic, flagTopic, "FIO", "kafka consumer topic")
-	flag.StringVar(&config.Topic, flagGroup, "groupDef", "kafka consumer group")
+	flag.StringVar(&config.Group, flagGroup, "groupDef", "kafka consumer group")
 	flag.Parse()
 }
 

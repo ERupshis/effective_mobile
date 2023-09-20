@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -13,13 +14,14 @@ type KafkaProducer struct {
 }
 
 // CreateKafkaProducer Create writer.
-func CreateKafkaProducer(brokerAddr []string, topic string) Producer {
+func CreateKafkaProducer(brokerAddr []string, topic string, log logger.BaseLogger) Producer {
 	producer := &KafkaProducer{
 		kafka.Writer{
 			Addr:                   kafka.TCP(brokerAddr...),
 			Topic:                  topic,
 			Balancer:               &kafka.LeastBytes{},
 			AllowAutoTopicCreation: true,
+			Logger:                 log,
 		},
 	}
 	return producer
@@ -31,7 +33,11 @@ func (p *KafkaProducer) SendMessage(key, value string) error {
 		Value: []byte(value),
 	}
 
-	return p.WriteMessages(context.Background(), message)
+	if err := p.WriteMessages(context.Background(), message); err != nil {
+		return fmt.Errorf("failed to send kafka message: %w", err)
+	}
+
+	return nil
 }
 
 func (p *KafkaProducer) Close() error {
@@ -45,11 +51,12 @@ type KafkaConsumer struct {
 // CreateKafkaConsumer Create reader.
 func CreateKafkaConsumer(brokerAddr []string, topic string, groupID string) Consumer {
 	readerConfig := kafka.ReaderConfig{
-		Brokers:   brokerAddr,
-		Topic:     topic,
-		GroupID:   groupID,
-		Partition: 0,
-		MaxBytes:  10e6, // 10MB
+		Brokers:     brokerAddr,
+		Topic:       topic,
+		GroupID:     groupID,
+		Partition:   0,
+		MaxBytes:    10e6, // 10MB
+		StartOffset: kafka.FirstOffset,
 	}
 
 	reader := kafka.NewReader(readerConfig)
