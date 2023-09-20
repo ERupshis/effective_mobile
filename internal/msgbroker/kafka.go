@@ -41,7 +41,7 @@ func (p *KafkaProducer) SendMessage(key, value string) error {
 }
 
 func (p *KafkaProducer) Close() error {
-	return p.Close()
+	return p.Writer.Close()
 }
 
 type KafkaConsumer struct {
@@ -76,5 +76,5 @@ func (c *KafkaConsumer) ReadMessage(ctx context.Context) (Message, error) {
 }
 
 func (c *KafkaConsumer) Close() error {
-	return c.Close()
+	return c.Reader.Close()
 }
