@@ -28,7 +28,7 @@ func Run(ctx context.Context, producer msgbroker.Producer, log logger.BaseLogger
 
 	key := "person data"
 	for randomName := range chGeneratedNames {
-		err := producer.SendMessage(key, string(randomName))
+		err := producer.SendMessage(ctx, key, string(randomName))
 		if err != nil {
 			log.Info("send message failed: %v", err)
 		}

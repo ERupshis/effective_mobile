@@ -27,19 +27,28 @@ func main() {
 	}
 	defer log.Sync()
 
-	//kafka
-	reader := msgbroker.CreateKafkaConsumer(cfg.BrokerAddr, cfg.Topic, cfg.Group, log)
-	defer helpers.ExecuteWithLogError(reader.Close, log)
+	//kafka.
+	brokerReader := msgbroker.CreateKafkaConsumer(cfg.BrokerAddr, cfg.TopicIn, cfg.Group, log)
+	defer helpers.ExecuteWithLogError(brokerReader.Close, log)
 
-	//kafka message reader.
+	brokerWriter := msgbroker.CreateKafkaProducer(cfg.BrokerAddr, cfg.TopicError, log)
+	defer helpers.ExecuteWithLogError(brokerReader.Close, log)
+
 	ctxWithCancel, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	chMessages := make(chan msgbroker.Message, 10)
+	go brokerReader.Listen(ctxWithCancel, chMessages)
+
+	chMessageErrors := make(chan msgbroker.Message, 10)
+	defer close(chMessageErrors)
+	go brokerWriter.Listen(ctxWithCancel, chMessageErrors)
 
 	//storage.
 	strg := storage.CreateRamStorage()
 
-	chMessages := make(chan msgbroker.Message, 10)
-	go reader.Listen(ctxWithCancel, chMessages)
+	//msgbrokercontroller.
+
 	for message := range chMessages {
 		personData := datastructs.PersonData{}
 		if err := json.Unmarshal(message.Value, &personData); err != nil {

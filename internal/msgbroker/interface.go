@@ -10,7 +10,8 @@ type Message struct {
 }
 
 type Producer interface {
-	SendMessage(key, value string) error
+	Listen(ctx context.Context, chMessages <-chan Message)
+	SendMessage(ctx context.Context, key, value string) error
 	Close() error
 }
 

@@ -24,7 +24,7 @@ func Parse() Config {
 // FLAGS PARSING.
 const (
 	flagBrokers = "br"
-	flagTopic   = "t"
+	flagTopic   = "tin"
 )
 
 func checkFlags(config *Config) {

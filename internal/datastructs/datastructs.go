@@ -1,6 +1,6 @@
 package datastructs
 
-//go:generate easyjson -all persondata.go
+//go:generate easyjson -all datastructs.go
 type PersonData struct {
 	Name        string `json:"name"`
 	Surname     string `json:"surname"`
@@ -8,4 +8,9 @@ type PersonData struct {
 	Age         string `json:"age,omitempty"`
 	Sex         string `json:"sex,omitempty"`
 	Nationality string `json:"nationality,omitempty"`
+}
+
+type ErrorMessage struct {
+	Error           string `json:"error"`
+	OriginalMessage string `json:"original"`
 }

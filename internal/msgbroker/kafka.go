@@ -12,29 +12,52 @@ import (
 // KafkaProducer WRITER.
 type KafkaProducer struct {
 	kafka.Writer
+	log logger.BaseLogger
 }
 
 // CreateKafkaProducer Create writer.
 func CreateKafkaProducer(brokerAddr []string, topic string, log logger.BaseLogger) Producer {
 	producer := &KafkaProducer{
-		kafka.Writer{
+		Writer: kafka.Writer{
 			Addr:                   kafka.TCP(brokerAddr...),
 			Topic:                  topic,
 			Balancer:               &kafka.LeastBytes{},
 			AllowAutoTopicCreation: true,
 			Logger:                 log,
 		},
+		log: log,
 	}
 	return producer
 }
 
-func (p *KafkaProducer) SendMessage(key, value string) error {
+func (p *KafkaProducer) Listen(ctx context.Context, chMessages <-chan Message) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case msg, ok := <-chMessages:
+			if !ok {
+				//channel was closed.
+				return
+			}
+
+			err := p.SendMessage(ctx, string(msg.Key), string(msg.Value))
+			if err != nil {
+				p.log.Info("send message '%v' finished with error: %v.", msg, err)
+				time.Sleep(time.Second)
+			}
+			p.log.Info("message sent: %s = %s\n", string(msg.Key), string(msg.Value))
+		}
+	}
+}
+
+func (p *KafkaProducer) SendMessage(ctx context.Context, key, value string) error {
 	message := kafka.Message{
 		Key:   []byte(key),
 		Value: []byte(value),
 	}
 
-	if err := p.WriteMessages(context.Background(), message); err != nil {
+	if err := p.WriteMessages(ctx, message); err != nil {
 		return fmt.Errorf("failed to send kafka message: %w", err)
 	}
 
@@ -72,13 +95,13 @@ func (c *KafkaConsumer) Listen(ctx context.Context, chMessages chan<- Message) {
 			close(chMessages)
 			return
 		default:
-			m, err := c.ReadMessage(context.Background())
+			msg, err := c.ReadMessage(ctx)
 			if err != nil {
 				c.log.Info("read message finished with error: %v. Sleep to retry.", err)
 				time.Sleep(time.Second)
 			}
-			c.log.Info("message received: %s = %s\n", string(m.Key), string(m.Value))
-			chMessages <- Message{Key: m.Key, Value: m.Value}
+			c.log.Info("message received: %s = %s\n", string(msg.Key), string(msg.Value))
+			chMessages <- Message{Key: msg.Key, Value: msg.Value}
 		}
 	}
 }
