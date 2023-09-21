@@ -16,9 +16,9 @@ import (
 const packageName = "extradatactrl"
 
 var remoteServices = []string{
-	"https://api.agify.io",
-	"https://api.genderize.io",
-	"https://api.nationalize.io",
+	//"https://api.agify.io",
+	//"https://api.genderize.io",
+	//"https://api.nationalize.io",
 }
 
 type Controller struct {
@@ -60,7 +60,7 @@ func (c *Controller) Run(ctx context.Context) {
 			}
 
 			if c.fillExtraData(ctx, &personDataIn) {
-				c.log.Info("["+packageName+":Controller:Run] person data from msg has been prepared to fill extra data: %v", personDataIn.Data)
+				c.log.Info("["+packageName+":Controller:Run] person data was filled with extra data: %v", personDataIn.Data)
 				c.chOut <- personDataIn
 			}
 		}
