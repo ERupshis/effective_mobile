@@ -62,7 +62,11 @@ func main() {
 	go extraController.Run(ctxWithCancel)
 
 	//storage.
-	strg := storage.CreateRamStorage()
+	strg, err := storage.CreatePostgreDB(ctxWithCancel, cfg, log)
+	if err != nil {
+		log.Info("failed to connect to storage: %v", err)
+		return
+	}
 
 	//save messages controller.
 	chErrorsSaveCtrl := make(chan msgbroker.Message, 10)

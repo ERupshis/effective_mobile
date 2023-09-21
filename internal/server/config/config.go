@@ -10,10 +10,11 @@ import (
 )
 
 type Config struct {
-	BrokerAddr []string
-	TopicIn    string
-	TopicError string
-	Group      string
+	BrokerAddr  []string
+	DatabaseDSN string
+	Group       string
+	TopicIn     string
+	TopicError  string
 }
 
 func Parse() Config {
@@ -25,10 +26,11 @@ func Parse() Config {
 
 // FLAGS PARSING.
 const (
-	flagBrokers    = "br"
-	flagTopicIn    = "tin"
-	flagTopicError = "terr"
-	flagGroup      = "g"
+	flagBrokers     = "br"
+	flagDatabaseDSN = "d"
+	flagGroup       = "g"
+	flagTopicIn     = "tin"
+	flagTopicError  = "terr"
 )
 
 func checkFlags(config *Config) {
@@ -39,15 +41,18 @@ func checkFlags(config *Config) {
 	flag.StringVar(&config.TopicIn, flagTopicIn, "FIO", "kafka consumer topic")
 	flag.StringVar(&config.TopicError, flagTopicError, "FIO_FAILED", "kafka producer topic(response in case of errors)")
 	flag.StringVar(&config.Group, flagGroup, "groupServer", "kafka consumer group")
+	flag.StringVar(&config.DatabaseDSN, flagDatabaseDSN, "postgres://postgres:postgres@localhost:5432/effective_mobile_db?sslmode=disable", "database DSN")
+
 	flag.Parse()
 }
 
 // ENVIRONMENTS PARSING.
 type envConfig struct {
-	BrokerAddr string `env:"BROKERS"`
-	TopicIn    string `env:"TOPIC_IN"`
-	TopicError string `env:"TOPIC_ERROR"`
-	Group      string `env:"GROUP"`
+	BrokerAddr  string `env:"BROKERS"`
+	DatabaseDSN string `env:"DATABASE_DSN"`
+	Group       string `env:"GROUP"`
+	TopicIn     string `env:"TOPIC_IN"`
+	TopicError  string `env:"TOPIC_ERROR"`
 }
 
 func checkEnvironments(config *Config) {
@@ -58,7 +63,8 @@ func checkEnvironments(config *Config) {
 	}
 
 	confighelper.SetEnvToParamIfNeed(&config.BrokerAddr, envs.BrokerAddr)
+	confighelper.SetEnvToParamIfNeed(&config.DatabaseDSN, envs.DatabaseDSN)
+	confighelper.SetEnvToParamIfNeed(&config.Group, envs.Group)
 	confighelper.SetEnvToParamIfNeed(&config.TopicIn, envs.TopicIn)
 	confighelper.SetEnvToParamIfNeed(&config.TopicError, envs.TopicError)
-	confighelper.SetEnvToParamIfNeed(&config.Group, envs.Group)
 }

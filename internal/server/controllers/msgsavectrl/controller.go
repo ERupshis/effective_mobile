@@ -19,10 +19,10 @@ type Controller struct {
 	chError chan<- msgbroker.Message
 
 	log  logger.BaseLogger
-	strg storage.Storage
+	strg storage.BaseStorageManager
 }
 
-func Create(chIn <-chan datastructs.ExtraDataFilling, chError chan<- msgbroker.Message, strg storage.Storage, log logger.BaseLogger) *Controller {
+func Create(chIn <-chan datastructs.ExtraDataFilling, chError chan<- msgbroker.Message, strg storage.BaseStorageManager, log logger.BaseLogger) *Controller {
 	return &Controller{
 		chIn:    chIn,
 		chError: chError,
