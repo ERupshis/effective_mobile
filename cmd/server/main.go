@@ -73,8 +73,6 @@ func main() {
 	errorsController := errorsctrl.Create([]<-chan msgbroker.Message{chErrorsBrokerCtrl, chErrorsExtraCtrl, chErrorsSaveCtrl}, chMessageErrors, log)
 	go errorsController.Run(ctxWithCancel)
 
-	go errorsController.Run(ctxWithCancel)
-
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 	<-sigCh

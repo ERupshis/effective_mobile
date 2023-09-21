@@ -97,8 +97,7 @@ func (c *KafkaConsumer) Listen(ctx context.Context, chMessages chan<- Message) {
 		default:
 			msg, err := c.ReadMessage(ctx)
 			if err != nil {
-				c.log.Info("[KafkaConsumer:Listen] read message finished with error: %v. Sleep to retry.", err)
-				time.Sleep(time.Second)
+				c.log.Info("[KafkaConsumer:Listen] read message finished with error: %v.", err)
 			}
 			c.log.Info("[KafkaConsumer:Listen] message received: %s = %s", string(msg.Key), string(msg.Value))
 			chMessages <- Message{Key: msg.Key, Value: msg.Value}
