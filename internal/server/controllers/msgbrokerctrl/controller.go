@@ -10,6 +10,8 @@ import (
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
 )
 
+const packageName = "msgbrokerctrl"
+
 type Controller struct {
 	//INPUT channels.
 	chIn <-chan msgbroker.Message
@@ -48,7 +50,7 @@ func (c *Controller) Run(ctx context.Context) {
 			if err := c.handleMessage(msgIn); err != nil {
 				msgErr, err := createErrorMessage(msgIn.Value, err)
 				if err != nil {
-					c.log.Info("create error message: %w", err)
+					c.log.Info("["+packageName+":Controller:Run] create error message: %w", err)
 					continue
 				}
 
@@ -73,7 +75,7 @@ func (c *Controller) handleMessage(message msgbroker.Message) error {
 	}
 
 	c.chOut <- personData
-	c.log.Info("person data from message has been prepared to fill extra data: %v\n", personData)
+	c.log.Info("["+packageName+":Controller:handleMessage] person data from message has been prepared to fill extra data: %v\n", personData)
 	return nil
 }
 

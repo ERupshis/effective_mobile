@@ -8,6 +8,8 @@ import (
 	"github.com/erupshis/effective_mobile/internal/server/storage"
 )
 
+const packageName = "extradatactrl"
+
 type Controller struct {
 	chIn  <-chan datastructs.PersonData
 	chOut chan<- datastructs.PersonData

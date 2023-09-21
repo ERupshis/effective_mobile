@@ -38,7 +38,7 @@ func checkFlags(config *Config) {
 
 	flag.StringVar(&config.TopicIn, flagTopicIn, "FIO", "kafka consumer topic")
 	flag.StringVar(&config.TopicError, flagTopicError, "FIO_FAILED", "kafka producer topic(response in case of errors)")
-	flag.StringVar(&config.Group, flagGroup, "groupDef", "kafka consumer group")
+	flag.StringVar(&config.Group, flagGroup, "groupServer", "kafka consumer group")
 	flag.Parse()
 }
 

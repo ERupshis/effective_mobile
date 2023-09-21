@@ -11,7 +11,9 @@ import (
 
 type Config struct {
 	BrokerAddr []string
-	Topic      string
+	TopicIn    string
+	TopicOut   string
+	Group      string
 }
 
 func Parse() Config {
@@ -23,8 +25,10 @@ func Parse() Config {
 
 // FLAGS PARSING.
 const (
-	flagBrokers = "br"
-	flagTopic   = "tin"
+	flagBrokers  = "br"
+	flagTopicIn  = "tin"
+	flagTopicOut = "tout"
+	flagGroup    = "g"
 )
 
 func checkFlags(config *Config) {
@@ -32,14 +36,19 @@ func checkFlags(config *Config) {
 	flag.StringVar(&brokers, flagBrokers, "localhost:9092", "kafka brokers with ',' separator between")
 	config.BrokerAddr = strings.Split(brokers, ",")
 
-	flag.StringVar(&config.Topic, flagTopic, "FIO", "kafka producer topic")
+	flag.StringVar(&config.TopicIn, flagTopicIn, "FIO_FAILED", "kafka consumer topic for incoming errors")
+	flag.StringVar(&config.TopicOut, flagTopicOut, "FIO", "kafka producer topic")
+
+	flag.StringVar(&config.Group, flagGroup, "groupAgent", "kafka consumer group")
 	flag.Parse()
 }
 
 // ENVIRONMENTS PARSING.
 type envConfig struct {
 	BrokerAddr string `env:"BROKERS"`
-	Topic      string `env:"TOPIC"`
+	TopicIn    string `env:"TOPIC_IN"`
+	TopicOut   string `env:"TOPIC_OUT"`
+	Group      string `env:"GROUP"`
 }
 
 func checkEnvironments(config *Config) {
@@ -50,5 +59,7 @@ func checkEnvironments(config *Config) {
 	}
 
 	confighelper.SetEnvToParamIfNeed(&config.BrokerAddr, envs.BrokerAddr)
-	confighelper.SetEnvToParamIfNeed(&config.Topic, envs.Topic)
+	confighelper.SetEnvToParamIfNeed(&config.TopicIn, envs.TopicIn)
+	confighelper.SetEnvToParamIfNeed(&config.TopicOut, envs.TopicOut)
+	confighelper.SetEnvToParamIfNeed(&config.Group, envs.Group)
 }

@@ -25,14 +25,33 @@ func main() {
 	}
 
 	//kafka.
-	writer := msgbroker.CreateKafkaProducer(cfg.BrokerAddr, cfg.Topic, log)
-	defer helpers.ExecuteWithLogError(writer.Close, log)
+	brokerWriter := msgbroker.CreateKafkaProducer(cfg.BrokerAddr, cfg.TopicOut, log)
+	defer helpers.ExecuteWithLogError(brokerWriter.Close, log)
 
-	//random names generator.
+	brokerReader := msgbroker.CreateKafkaConsumer(cfg.BrokerAddr, cfg.TopicIn, cfg.Group, log)
+	defer helpers.ExecuteWithLogError(brokerReader.Close, log)
+
 	ctxWithCancel, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go msggenerator.Run(ctxWithCancel, writer, log)
+	chMessageErrors := make(chan msgbroker.Message, 10)
+	go brokerReader.Listen(ctxWithCancel, chMessageErrors)
+	go func(ctx context.Context, chOut <-chan msgbroker.Message, log logger.BaseLogger) {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case _, ok := <-chOut:
+				if !ok {
+					return
+				}
+				//some work.
+			}
+		}
+	}(ctxWithCancel, chMessageErrors, log)
+
+	//random names generator.
+	go msggenerator.Run(ctxWithCancel, brokerWriter, log)
 
 	// Create a channel to wait for signals (e.g., Ctrl+C) to gracefully exit.
 	sigCh := make(chan os.Signal, 1)
