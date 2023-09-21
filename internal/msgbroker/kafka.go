@@ -46,7 +46,7 @@ func (p *KafkaProducer) Listen(ctx context.Context, chMessages <-chan Message) {
 				p.log.Info("[KafkaProducer:Listen] send message '%v' finished with error: %v.", msg, err)
 				time.Sleep(time.Second)
 			}
-			p.log.Info("[KafkaProducer:Listen] message sent: %s = %s\n", string(msg.Key), string(msg.Value))
+			p.log.Info("[KafkaProducer:Listen] message sent: %s = %s", string(msg.Key), string(msg.Value))
 		}
 	}
 }
@@ -100,7 +100,7 @@ func (c *KafkaConsumer) Listen(ctx context.Context, chMessages chan<- Message) {
 				c.log.Info("[KafkaConsumer:Listen] read message finished with error: %v. Sleep to retry.", err)
 				time.Sleep(time.Second)
 			}
-			c.log.Info("[KafkaConsumer:Listen] message received: %s = %s\n", string(msg.Key), string(msg.Value))
+			c.log.Info("[KafkaConsumer:Listen] message received: %s = %s", string(msg.Key), string(msg.Value))
 			chMessages <- Message{Key: msg.Key, Value: msg.Value}
 		}
 	}

@@ -72,6 +72,6 @@ func (c *Controller) handleMessage(msg msgbroker.Message) error {
 		Raw:  msg,
 		Data: personData,
 	}
-	c.log.Info("["+packageName+":Controller:handleMessage] person data from msg has been prepared to fill extra data: %v\n", personData)
+	c.log.Info("["+packageName+":Controller:handleMessage] person data from msg has been prepared to fill extra data: %v", personData)
 	return nil
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
 	"github.com/erupshis/effective_mobile/internal/server/msghelper"
-	"github.com/erupshis/effective_mobile/internal/server/storage"
 )
 
 const packageName = "extradatactrl"
@@ -32,17 +31,15 @@ type Controller struct {
 
 	client client.BaseClient
 	log    logger.BaseLogger
-	strg   storage.Storage
 }
 
 func Create(chIn <-chan datastructs.ExtraDataFilling, chOut chan<- datastructs.ExtraDataFilling, chError chan<- msgbroker.Message,
-	client client.BaseClient, strg storage.Storage, log logger.BaseLogger) *Controller {
+	client client.BaseClient, log logger.BaseLogger) *Controller {
 	return &Controller{
 		chIn:    chIn,
 		chOut:   chOut,
 		chError: chError,
 		client:  client,
-		strg:    strg,
 		log:     log,
 	}
 }
@@ -63,7 +60,7 @@ func (c *Controller) Run(ctx context.Context) {
 			}
 
 			if c.fillExtraData(ctx, &personDataIn) {
-				c.log.Info("["+packageName+":Controller:Run] storage save value : %v", personDataIn.Data)
+				c.log.Info("["+packageName+":Controller:Run] person data from msg has been prepared to fill extra data: %v", personDataIn.Data)
 				c.chOut <- personDataIn
 			}
 		}

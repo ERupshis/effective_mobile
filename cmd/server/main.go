@@ -16,7 +16,6 @@ import (
 	"github.com/erupshis/effective_mobile/internal/server/controllers/errorsctrl"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/extradatactrl"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/msgbrokerctrl"
-	"github.com/erupshis/effective_mobile/internal/server/storage"
 )
 
 func main() {
@@ -46,7 +45,7 @@ func main() {
 	go brokerWriter.Listen(ctxWithCancel, chMessageErrors)
 
 	//storage.
-	strg := storage.CreateRamStorage()
+	//strg := storage.CreateRamStorage()
 
 	//channels for filling missing persons data.
 	chPartialPersonData := make(chan datastructs.ExtraDataFilling, 10)
@@ -60,7 +59,7 @@ func main() {
 	//extra data controller.
 	chErrorsExtraCtrl := make(chan msgbroker.Message, 10)
 	clientForRemoteAPI := client.CreateDefault(log)
-	extraController := extradatactrl.Create(chPartialPersonData, chFullPersonData, chErrorsExtraCtrl, clientForRemoteAPI, strg, log)
+	extraController := extradatactrl.Create(chPartialPersonData, chFullPersonData, chErrorsExtraCtrl, clientForRemoteAPI, log)
 	go extraController.Run(ctxWithCancel)
 
 	//errors controller.

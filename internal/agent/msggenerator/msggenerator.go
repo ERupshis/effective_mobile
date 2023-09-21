@@ -33,7 +33,7 @@ func Run(ctx context.Context, producer msgbroker.Producer, log logger.BaseLogger
 			log.Info("send message failed: %v", err)
 		}
 
-		log.Info("Message sent: Key=%s, Value=%s\n", key, randomName)
+		log.Info("Message sent: Key=%s, Value=%s", key, randomName)
 	}
 }
 

@@ -3,6 +3,7 @@ package retryer
 import (
 	"context"
 	"errors"
+	"net/http"
 	"testing"
 	"time"
 
@@ -72,7 +73,7 @@ func TestRetryCallWithTimeout(t *testing.T) {
 		log              logger.BaseLogger
 		intervals        []int
 		repeatableErrors []error
-		callback         func(context.Context) error
+		callback         func(context.Context) (int64, []byte, error)
 	}
 	tests := []struct {
 		name    string
@@ -86,15 +87,15 @@ func TestRetryCallWithTimeout(t *testing.T) {
 				log:              log,
 				intervals:        []int{1, 1, 1},
 				repeatableErrors: nil,
-				callback: func(ctx context.Context) error {
+				callback: func(ctx context.Context) (int64, []byte, error) {
 					currentTime := time.Now()
 					for {
 						select {
 						case <-ctx.Done():
-							return errors.New(pgerrcode.ConnectionException)
+							return http.StatusRequestTimeout, []byte{}, errors.New(pgerrcode.ConnectionException)
 						default:
 							if time.Since(currentTime) > 10*time.Second {
-								return nil
+								return http.StatusOK, []byte{}, nil
 							}
 							time.Sleep(50 * time.Millisecond)
 						}
@@ -110,8 +111,8 @@ func TestRetryCallWithTimeout(t *testing.T) {
 				log:              log,
 				intervals:        nil,
 				repeatableErrors: nil,
-				callback: func(ctx context.Context) error {
-					return nil
+				callback: func(ctx context.Context) (int64, []byte, error) {
+					return http.StatusOK, []byte{}, nil
 				},
 			},
 			wantErr: nil,
@@ -123,15 +124,15 @@ func TestRetryCallWithTimeout(t *testing.T) {
 				log:              log,
 				intervals:        []int{1, 1, 1},
 				repeatableErrors: databaseErrorsToRetry,
-				callback: func(ctx context.Context) error {
+				callback: func(ctx context.Context) (int64, []byte, error) {
 					currentTime := time.Now()
 					for {
 						select {
 						case <-ctx.Done():
-							return errors.New(pgerrcode.ConnectionException)
+							return http.StatusRequestTimeout, []byte{}, errors.New(pgerrcode.ConnectionException)
 						default:
 							if time.Since(currentTime) > 10*time.Second {
-								return nil
+								return http.StatusOK, []byte{}, nil
 							}
 							time.Sleep(50 * time.Millisecond)
 						}
@@ -147,15 +148,15 @@ func TestRetryCallWithTimeout(t *testing.T) {
 				log:              log,
 				intervals:        []int{1, 1, 1},
 				repeatableErrors: databaseErrorsToRetry,
-				callback: func(ctx context.Context) error {
+				callback: func(ctx context.Context) (int64, []byte, error) {
 					currentTime := time.Now()
 					for {
 						select {
 						case <-ctx.Done():
-							return errors.New("some error")
+							return http.StatusRequestTimeout, []byte{}, errors.New("some error")
 						default:
 							if time.Since(currentTime) > 10*time.Second {
-								return nil
+								return http.StatusOK, []byte{}, nil
 							}
 							time.Sleep(50 * time.Millisecond)
 						}
@@ -167,7 +168,9 @@ func TestRetryCallWithTimeout(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.wantErr, RetryCallWithTimeout(tt.args.ctx, tt.args.log, tt.args.intervals, tt.args.repeatableErrors, tt.args.callback))
+			//TODO: need to fix checks.
+			_, _, err := RetryCallWithTimeout(tt.args.ctx, tt.args.log, tt.args.intervals, tt.args.repeatableErrors, tt.args.callback)
+			assert.Equal(t, tt.wantErr, err)
 		})
 	}
 }
