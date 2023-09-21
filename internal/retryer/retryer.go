@@ -9,7 +9,10 @@ import (
 
 var defIntervals = []int{1, 3, 5}
 
-func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals []int, repeatableErrors []error, callback func(context.Context) error) error {
+func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals []int, repeatableErrors []error,
+	callback func(context.Context) (int64, []byte, error)) (int64, []byte, error) {
+	var status int64
+	var body []byte
 	var err error
 
 	if intervals == nil {
@@ -19,10 +22,10 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 	attempt := 0
 	for _, interval := range intervals {
 		ctxWithTime, cancel := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
-		err = callback(ctxWithTime)
+		status, body, err = callback(ctxWithTime)
 		if err == nil {
 			cancel()
-			return nil
+			return status, body, nil
 		}
 
 		<-ctxWithTime.Done()
@@ -39,7 +42,7 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 		cancel()
 	}
 
-	return err
+	return status, body, err
 }
 
 func canRetryCall(err error, repeatableErrors []error) bool {

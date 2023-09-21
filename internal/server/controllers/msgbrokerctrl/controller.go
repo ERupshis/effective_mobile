@@ -8,6 +8,7 @@ import (
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
+	"github.com/erupshis/effective_mobile/internal/server/msghelper"
 )
 
 const packageName = "msgbrokerctrl"
@@ -48,15 +49,8 @@ func (c *Controller) Run(ctx context.Context) {
 			}
 
 			if err := c.handleMessage(msgIn); err != nil {
-				msgErr, err := createErrorMessage(msgIn.Value, err)
-				if err != nil {
-					c.log.Info("["+packageName+":Controller:Run] create error message: %w", err)
-					continue
-				}
-
-				c.chError <- msgbroker.Message{
-					Key:   []byte("error-in-incoming-message"),
-					Value: msgErr,
+				if err := msghelper.PutErrorMessageInChan(c.chError, &msgIn, "error-in-incoming-msg", err); err != nil {
+					c.log.Info("["+packageName+":Controller:Run] put message in error chan: %w", err)
 				}
 			}
 		}
@@ -69,7 +63,7 @@ func (c *Controller) handleMessage(msg msgbroker.Message) error {
 		return fmt.Errorf("msg JSON unmarshaling: %w", err)
 	}
 
-	_, err := isMessageValid(personData)
+	_, err := msghelper.IsMessageValid(personData)
 	if err != nil {
 		return fmt.Errorf("input messsage is incorrect: %w", err)
 	}
@@ -80,35 +74,4 @@ func (c *Controller) handleMessage(msg msgbroker.Message) error {
 	}
 	c.log.Info("["+packageName+":Controller:handleMessage] person data from msg has been prepared to fill extra data: %v\n", personData)
 	return nil
-}
-
-func createErrorMessage(originalMsg []byte, err error) ([]byte, error) {
-	msgError, errMarshaling := json.Marshal(
-		datastructs.ErrorMessage{
-			OriginalMessage: string(originalMsg),
-			Error:           err.Error(),
-		})
-
-	if errMarshaling != nil {
-		return []byte{}, fmt.Errorf("JSON marshaling error: %w", errMarshaling)
-	}
-
-	return msgError, nil
-}
-
-func isMessageValid(personData datastructs.PersonData) (bool, error) {
-	var err error
-	if personData.Surname == "" {
-		err = fmt.Errorf("surname is/are empty")
-	}
-
-	if personData.Name == "" {
-		if err == nil {
-			err = fmt.Errorf("name is empty")
-		} else {
-			err = fmt.Errorf("name and %v", err)
-		}
-	}
-
-	return err == nil, err
 }

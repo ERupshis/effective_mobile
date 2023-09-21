@@ -7,11 +7,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/erupshis/effective_mobile/internal/client"
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 	"github.com/erupshis/effective_mobile/internal/helpers"
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
 	"github.com/erupshis/effective_mobile/internal/server/config"
+	"github.com/erupshis/effective_mobile/internal/server/controllers/errorsctrl"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/extradatactrl"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/msgbrokerctrl"
 	"github.com/erupshis/effective_mobile/internal/server/storage"
@@ -51,12 +53,19 @@ func main() {
 	chFullPersonData := make(chan datastructs.ExtraDataFilling, 10)
 
 	//message broker controller.
-	msgController := msgbrokerctrl.Create(chMessages, chMessageErrors, chPartialPersonData, log)
+	chErrorsBrokerCtrl := make(chan msgbroker.Message, 10)
+	msgController := msgbrokerctrl.Create(chMessages, chErrorsBrokerCtrl, chPartialPersonData, log)
 	go msgController.Run(ctxWithCancel)
 
 	//extra data controller.
-	extraController := extradatactrl.Create(chPartialPersonData, chFullPersonData, strg, log)
+	chErrorsExtraCtrl := make(chan msgbroker.Message, 10)
+	clientForRemoteAPI := client.CreateDefault(log)
+	extraController := extradatactrl.Create(chPartialPersonData, chFullPersonData, chErrorsExtraCtrl, clientForRemoteAPI, strg, log)
 	go extraController.Run(ctxWithCancel)
+
+	//errors controller.
+	errorsController := errorsctrl.Create([]<-chan msgbroker.Message{chErrorsBrokerCtrl, chErrorsExtraCtrl}, chMessageErrors, log)
+	go errorsController.Run(ctxWithCancel)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
