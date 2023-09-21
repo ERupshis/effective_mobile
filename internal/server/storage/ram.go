@@ -18,7 +18,7 @@ func CreateRamStorage() Storage {
 	return &storage
 }
 
-func (r *ram) SavePersonData(_ context.Context, data *datastructs.PersonData) error {
+func (r *ram) AddPersonData(_ context.Context, data *datastructs.PersonData) error {
 	r.mu.Lock()
 	r.data[len(r.data)] = *data
 	r.mu.Unlock()

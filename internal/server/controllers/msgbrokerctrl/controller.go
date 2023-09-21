@@ -1,4 +1,4 @@
-package msgbrokercontroller
+package msgbrokerctrl
 
 import (
 	"context"
@@ -8,19 +8,26 @@ import (
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
-	"github.com/erupshis/effective_mobile/internal/server/storage"
 )
 
 type Controller struct {
-	chIn    <-chan msgbroker.Message
-	chError chan<- msgbroker.Message
+	//INPUT channels.
+	chIn <-chan msgbroker.Message
 
-	strg storage.Storage
-	log  logger.BaseLogger
+	//OUTPUT channels.
+	chError chan<- msgbroker.Message
+	chOut   chan<- datastructs.PersonData
+
+	log logger.BaseLogger
 }
 
-func Create(chIn <-chan msgbroker.Message, chError chan<- msgbroker.Message, strg storage.Storage, log logger.BaseLogger) *Controller {
-	return &Controller{chIn: chIn, chError: chError, strg: strg, log: log}
+func Create(chIn <-chan msgbroker.Message, chError chan<- msgbroker.Message, chPartialPersonData chan<- datastructs.PersonData,
+	log logger.BaseLogger) *Controller {
+	return &Controller{chIn: chIn,
+		chError: chError,
+		chOut:   chPartialPersonData,
+		log:     log,
+	}
 }
 
 func (c *Controller) Run(ctx context.Context) {
@@ -28,16 +35,18 @@ func (c *Controller) Run(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			close(c.chError)
+			close(c.chOut)
 			return
 
 		case msgIn, ok := <-c.chIn:
 			if !ok {
 				close(c.chError)
+				close(c.chOut)
 				return
 			}
 
-			if err := c.handleMessage(ctx, msgIn); err != nil {
-				msgErr, err := c.createErrorMessage(msgIn.Value, err)
+			if err := c.handleMessage(msgIn); err != nil {
+				msgErr, err := createErrorMessage(msgIn.Value, err)
 				if err != nil {
 					c.log.Info("create error message: %w", err)
 					continue
@@ -52,7 +61,7 @@ func (c *Controller) Run(ctx context.Context) {
 	}
 }
 
-func (c *Controller) handleMessage(ctx context.Context, message msgbroker.Message) error {
+func (c *Controller) handleMessage(message msgbroker.Message) error {
 	personData := datastructs.PersonData{}
 	if err := json.Unmarshal(message.Value, &personData); err != nil {
 		return fmt.Errorf("message JSON unmarshaling: %w", err)
@@ -63,15 +72,12 @@ func (c *Controller) handleMessage(ctx context.Context, message msgbroker.Messag
 		return fmt.Errorf("input messsage is incorrect: %w", err)
 	}
 
-	if err := c.strg.SavePersonData(ctx, &personData); err != nil {
-		return fmt.Errorf("storage save value fail: %w", err)
-	}
-
-	c.log.Info("person data from message saved: %v\n", personData)
+	c.chOut <- personData
+	c.log.Info("person data from message has been prepared to fill extra data: %v\n", personData)
 	return nil
 }
 
-func (c *Controller) createErrorMessage(originalMsg []byte, err error) ([]byte, error) {
+func createErrorMessage(originalMsg []byte, err error) ([]byte, error) {
 	msgError, errMarshaling := json.Marshal(
 		datastructs.ErrorMessage{
 			OriginalMessage: string(originalMsg),

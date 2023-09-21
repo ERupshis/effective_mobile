@@ -7,5 +7,5 @@ import (
 )
 
 type Storage interface {
-	SavePersonData(ctx context.Context, data *datastructs.PersonData) error
+	AddPersonData(ctx context.Context, data *datastructs.PersonData) error
 }
