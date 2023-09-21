@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 	"github.com/erupshis/effective_mobile/internal/logger"
@@ -31,6 +32,8 @@ var DatabaseErrorsToRetry = []error{
 type postgresDB struct {
 	database *sql.DB
 	log      logger.BaseLogger
+
+	mu sync.RWMutex
 }
 
 func CreatePostgreDB(ctx context.Context, cfg config.Config, log logger.BaseLogger) (BaseStorageManager, error) {
@@ -85,6 +88,8 @@ func (p *postgresDB) Close() error {
 }
 
 func (p *postgresDB) AddPersonData(ctx context.Context, data *datastructs.PersonData) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	//TODO:
 	return nil
 }

@@ -67,6 +67,7 @@ func main() {
 		log.Info("failed to connect to storage: %v", err)
 		return
 	}
+	defer helpers.ExecuteWithLogError(strg.Close, log)
 
 	//save messages controller.
 	chErrorsSaveCtrl := make(chan msgbroker.Message, 10)
