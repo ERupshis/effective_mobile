@@ -47,8 +47,8 @@ func main() {
 	strg := storage.CreateRamStorage()
 
 	//channels for filling missing persons data.
-	chPartialPersonData := make(chan datastructs.PersonData, 10)
-	chFullPersonData := make(chan datastructs.PersonData, 10)
+	chPartialPersonData := make(chan datastructs.ExtraDataFilling, 10)
+	chFullPersonData := make(chan datastructs.ExtraDataFilling, 10)
 
 	//message broker controller.
 	msgController := msgbrokerctrl.Create(chMessages, chMessageErrors, chPartialPersonData, log)

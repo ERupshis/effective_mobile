@@ -18,12 +18,12 @@ type Controller struct {
 
 	//OUTPUT channels.
 	chError chan<- msgbroker.Message
-	chOut   chan<- datastructs.PersonData
+	chOut   chan<- datastructs.ExtraDataFilling
 
 	log logger.BaseLogger
 }
 
-func Create(chIn <-chan msgbroker.Message, chError chan<- msgbroker.Message, chPartialPersonData chan<- datastructs.PersonData,
+func Create(chIn <-chan msgbroker.Message, chError chan<- msgbroker.Message, chPartialPersonData chan<- datastructs.ExtraDataFilling,
 	log logger.BaseLogger) *Controller {
 	return &Controller{chIn: chIn,
 		chError: chError,
@@ -63,10 +63,10 @@ func (c *Controller) Run(ctx context.Context) {
 	}
 }
 
-func (c *Controller) handleMessage(message msgbroker.Message) error {
+func (c *Controller) handleMessage(msg msgbroker.Message) error {
 	personData := datastructs.PersonData{}
-	if err := json.Unmarshal(message.Value, &personData); err != nil {
-		return fmt.Errorf("message JSON unmarshaling: %w", err)
+	if err := json.Unmarshal(msg.Value, &personData); err != nil {
+		return fmt.Errorf("msg JSON unmarshaling: %w", err)
 	}
 
 	_, err := isMessageValid(personData)
@@ -74,8 +74,11 @@ func (c *Controller) handleMessage(message msgbroker.Message) error {
 		return fmt.Errorf("input messsage is incorrect: %w", err)
 	}
 
-	c.chOut <- personData
-	c.log.Info("["+packageName+":Controller:handleMessage] person data from message has been prepared to fill extra data: %v\n", personData)
+	c.chOut <- datastructs.ExtraDataFilling{
+		Raw:  msg,
+		Data: personData,
+	}
+	c.log.Info("["+packageName+":Controller:handleMessage] person data from msg has been prepared to fill extra data: %v\n", personData)
 	return nil
 }
 

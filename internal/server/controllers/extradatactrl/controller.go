@@ -11,14 +11,14 @@ import (
 const packageName = "extradatactrl"
 
 type Controller struct {
-	chIn  <-chan datastructs.PersonData
-	chOut chan<- datastructs.PersonData
+	chIn  <-chan datastructs.ExtraDataFilling
+	chOut chan<- datastructs.ExtraDataFilling
 
 	log  logger.BaseLogger
 	strg storage.Storage
 }
 
-func Create(chIn <-chan datastructs.PersonData, chOut chan<- datastructs.PersonData, strg storage.Storage, log logger.BaseLogger) *Controller {
+func Create(chIn <-chan datastructs.ExtraDataFilling, chOut chan<- datastructs.ExtraDataFilling, strg storage.Storage, log logger.BaseLogger) *Controller {
 	return &Controller{
 		chIn:  chIn,
 		chOut: chOut,
@@ -40,12 +40,13 @@ func (c *Controller) Run(ctx context.Context) {
 				return
 			}
 
-			if err := c.strg.AddPersonData(ctx, &personDataIn); err != nil {
+			if err := c.strg.AddPersonData(ctx, &personDataIn.Data); err != nil {
 				c.log.Info("storage save value fail: %v", err)
 			}
 
 			//TODO: add useful work.
-			c.log.Info("storage save value : %v", personDataIn)
+			//TODO: in case of error need to log in error channel.
+			c.log.Info("storage save value : %s", personDataIn.Data)
 		}
 	}
 }

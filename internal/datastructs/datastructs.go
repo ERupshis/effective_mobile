@@ -1,5 +1,9 @@
 package datastructs
 
+import (
+	"github.com/erupshis/effective_mobile/internal/msgbroker"
+)
+
 //go:generate easyjson -all datastructs.go
 type PersonData struct {
 	Name        string `json:"name"`
@@ -13,4 +17,9 @@ type PersonData struct {
 type ErrorMessage struct {
 	Error           string `json:"error"`
 	OriginalMessage string `json:"original"`
+}
+
+type ExtraDataFilling struct {
+	Raw  msgbroker.Message
+	Data PersonData
 }
