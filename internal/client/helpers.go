@@ -12,7 +12,7 @@ func addQueryInURI(base string, params map[string]string) (string, error) {
 
 	u, err := url.Parse(base)
 	if err != nil {
-		return "", fmt.Errorf("Error parsing URL: %w", err)
+		return "", fmt.Errorf("error parsing URL: %w", err)
 	}
 
 	q := u.Query()
