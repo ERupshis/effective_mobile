@@ -29,14 +29,12 @@ func (c *Controller) Run(ctx context.Context) {
 	stopCh := make(chan struct{})
 	c.fanInMessages(stopCh)
 
-	for {
-		select {
-		case <-ctx.Done():
-			stopCh <- struct{}{}
-			close(c.chOut)
-			return
-		}
+	for range ctx.Done() {
+		stopCh <- struct{}{}
+		close(c.chOut)
+		return
 	}
+
 }
 
 func (c *Controller) fanInMessages(stopCh <-chan struct{}) {

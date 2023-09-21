@@ -5,15 +5,8 @@ import (
 	"fmt"
 
 	"github.com/erupshis/effective_mobile/internal/datastructs"
-	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
 )
-
-type Controller struct {
-	chError chan<- msgbroker.Message
-
-	log logger.BaseLogger
-}
 
 func PutErrorMessageInChan(chError chan<- msgbroker.Message, msg *msgbroker.Message, errMsgKey string, err error) error {
 	msgErr, err := CreateErrorMessage(msg.Value, err)
