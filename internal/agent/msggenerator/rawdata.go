@@ -6,6 +6,7 @@ var russianFirstNamesMale = []string{
 	"Dmitriy",
 	"Sergey",
 	"Mikhail",
+	"",
 }
 
 var russianFirstNamesFemale = []string{
@@ -22,6 +23,7 @@ var russianLastNames = []string{
 	"Smirnov",
 	"Kozlov",
 	"Sokolov",
+	"",
 }
 
 var russianPatronymicNamesMale = []string{
@@ -30,6 +32,7 @@ var russianPatronymicNamesMale = []string{
 	"Dmitrievich",
 	"Sergeevich",
 	"Mikhailovich",
+	"",
 }
 
 var russianPatronymicNamesFemale = []string{
@@ -46,6 +49,7 @@ var englishFirstNamesMale = []string{
 	"William",
 	"James",
 	"Robert",
+	"",
 }
 
 var englishFirstNamesFemale = []string{
