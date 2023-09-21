@@ -3,9 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/erupshis/effective_mobile/internal/client"
 	"github.com/erupshis/effective_mobile/internal/datastructs"
@@ -15,9 +14,11 @@ import (
 	"github.com/erupshis/effective_mobile/internal/server/config"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/errorsctrl"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/extradatactrl"
+	"github.com/erupshis/effective_mobile/internal/server/controllers/httpctrl"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/msgbrokerctrl"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/msgsavectrl"
 	"github.com/erupshis/effective_mobile/internal/server/storage"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
@@ -78,7 +79,14 @@ func main() {
 	errorsController := errorsctrl.Create([]<-chan msgbroker.Message{chErrorsBrokerCtrl, chErrorsExtraCtrl, chErrorsSaveCtrl}, chMessageErrors, log)
 	go errorsController.Run(ctxWithCancel)
 
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
-	<-sigCh
+	httpController := httpctrl.Create(strg, log)
+
+	//rest routing.
+	router := chi.NewRouter()
+	router.Mount("/", httpController.Route())
+	log.Info("server started with Host setting: %s", cfg.Host)
+	if err := http.ListenAndServe(cfg.Host, router); err != nil {
+		log.Info("server refused to start with error: %v", err)
+		panic(err)
+	}
 }

@@ -10,7 +10,7 @@ type PersonData struct {
 	Surname     string `json:"surname"`
 	Patronymic  string `json:"patronymic,omitempty"`
 	Age         int64  `json:"age,omitempty"`
-	Sex         string `json:"gender,omitempty"`
+	Gender      string `json:"gender,omitempty"`
 	Nationality string `json:"country,omitempty"`
 }
 

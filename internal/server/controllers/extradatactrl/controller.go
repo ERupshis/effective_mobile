@@ -10,7 +10,7 @@ import (
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
-	"github.com/erupshis/effective_mobile/internal/server/msghelper"
+	"github.com/erupshis/effective_mobile/internal/server/helpers/msghelper"
 )
 
 const packageName = "extradatactrl"

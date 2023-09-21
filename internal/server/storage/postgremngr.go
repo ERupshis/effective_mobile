@@ -89,22 +89,32 @@ func (p *postgresDB) Close() error {
 
 func (p *postgresDB) AddPersonData(ctx context.Context, data *datastructs.PersonData) error {
 	p.mu.Lock()
+	p.log.Info("AddPersonData is not implemented")
 	defer p.mu.Unlock()
 	//TODO:
 	return nil
 }
 
-func (p *postgresDB) GetPersonsData(ctx context.Context) ([]datastructs.PersonData, error) {
+func (p *postgresDB) GetPersonsData(ctx context.Context, filters map[string]string, pageLimit int64, offset int64) ([]datastructs.PersonData, error) {
 	//TODO:
+	p.log.Info("GetPersonsData is not implemented")
 	return []datastructs.PersonData{}, nil
 }
 
 func (p *postgresDB) DeletePersonDataById(ctx context.Context, personId int64) error {
 	//TODO:
+	p.log.Info("DeletePersonDataById is not implemented")
 	return nil
 }
 
-func (p *postgresDB) UpdatePersonDataById(ctx context.Context, personId int64) error {
+func (p *postgresDB) UpdatePersonDataById(ctx context.Context, personId int64, data *datastructs.PersonData) error {
 	//TODO:
+	p.log.Info("UpdatePersonDataById is not implemented")
+	return nil
+}
+
+func (p *postgresDB) UpdatePersonDataByIdPartially(ctx context.Context, personId int64, values map[string]string) error {
+	//TODO:
+	p.log.Info("UpdatePersonDataByIdPartially is not implemented")
 	return nil
 }

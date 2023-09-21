@@ -46,7 +46,7 @@ func easyjson1cf0b278DecodeGithubComErupshisEffectiveMobileInternalDatastructs(i
 		case "age":
 			out.Age = int64(in.Int64())
 		case "gender":
-			out.Sex = string(in.String())
+			out.Gender = string(in.String())
 		case "country":
 			out.Nationality = string(in.String())
 		default:
@@ -83,10 +83,10 @@ func easyjson1cf0b278EncodeGithubComErupshisEffectiveMobileInternalDatastructs(o
 		out.RawString(prefix)
 		out.Int64(int64(in.Age))
 	}
-	if in.Sex != "" {
+	if in.Gender != "" {
 		const prefix string = ",\"gender\":"
 		out.RawString(prefix)
-		out.String(string(in.Sex))
+		out.String(string(in.Gender))
 	}
 	if in.Nationality != "" {
 		const prefix string = ",\"country\":"
