@@ -85,33 +85,33 @@ func (p *postgresDB) AddPerson(ctx context.Context, data *datastructs.PersonData
 	defer p.mu.Unlock()
 
 	p.log.Info("[postgresDB:AddPerson] start transaction")
-	addPersonError := "add person in db: %w"
+	errorMessage := "add person in db: %w"
 	tx, err := p.database.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf(addPersonError, err)
+		return fmt.Errorf(errorMessage, err)
 	}
 
 	genderId, err := p.handler.GetAdditionalId(ctx, tx, data.Gender, postgrequeries.GendersTable)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return fmt.Errorf(addPersonError, err)
+		return fmt.Errorf(errorMessage, err)
 	}
 
 	countryId, err := p.handler.GetAdditionalId(ctx, tx, data.Country, postgrequeries.CountriesTable)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return fmt.Errorf(addPersonError, err)
+		return fmt.Errorf(errorMessage, err)
 	}
 
 	err = p.handler.InsertPerson(ctx, tx, data, genderId, countryId)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return fmt.Errorf(addPersonError, err)
+		return fmt.Errorf(errorMessage, err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return fmt.Errorf(addPersonError, err)
+		return fmt.Errorf(errorMessage, err)
 	}
 
 	p.log.Info("[postgresDB:AddPerson] transaction successful")
@@ -131,21 +131,21 @@ func (p *postgresDB) DeletePersonById(ctx context.Context, personId int64) (int6
 	defer p.mu.Unlock()
 
 	p.log.Info("[postgresDB:DeletePerson] start transaction")
-	deletePersonError := "delete person in db: %w"
+	errorMessage := "delete person in db: %w"
 	tx, err := p.database.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, fmt.Errorf(deletePersonError, err)
+		return 0, fmt.Errorf(errorMessage, err)
 	}
 
 	affectedCount, err := p.handler.DeletePerson(ctx, tx, personId)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return 0, fmt.Errorf(deletePersonError, err)
+		return 0, fmt.Errorf(errorMessage, err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return 0, fmt.Errorf(deletePersonError, err)
+		return 0, fmt.Errorf(errorMessage, err)
 	}
 
 	p.log.Info("[postgresDB:DeletePerson] transaction successful")
@@ -158,33 +158,33 @@ func (p *postgresDB) UpdatePersonById(ctx context.Context, id int64, data *datas
 	defer p.mu.Unlock()
 
 	p.log.Info("[postgresDB:UpdatePersonById] start transaction")
-	addPersonError := "add person in db: %w"
+	errorMessage := "update person in db: %w"
 	tx, err := p.database.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, fmt.Errorf(addPersonError, err)
+		return 0, fmt.Errorf(errorMessage, err)
 	}
 
 	genderId, err := p.handler.GetAdditionalId(ctx, tx, data.Gender, postgrequeries.GendersTable)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return 0, fmt.Errorf(addPersonError, err)
+		return 0, fmt.Errorf(errorMessage, err)
 	}
 
 	countryId, err := p.handler.GetAdditionalId(ctx, tx, data.Country, postgrequeries.CountriesTable)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return 0, fmt.Errorf(addPersonError, err)
+		return 0, fmt.Errorf(errorMessage, err)
 	}
 
 	affectedCount, err := p.handler.UpdatePersonById(ctx, tx, id, data, genderId, countryId)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return 0, fmt.Errorf(addPersonError, err)
+		return 0, fmt.Errorf(errorMessage, err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return 0, fmt.Errorf(addPersonError, err)
+		return 0, fmt.Errorf(errorMessage, err)
 	}
 
 	p.log.Info("[postgresDB:UpdatePersonById] transaction successful")
@@ -196,55 +196,27 @@ func (p *postgresDB) UpdatePersonByIdPartially(ctx context.Context, id int64, va
 	defer p.mu.Unlock()
 
 	p.log.Info("[postgresDB:UpdatePartiallyPersonById] start transaction")
-	addPersonError := "add person in db: %w"
+	errorMessage := "update person partially in db: %w"
 	tx, err := p.database.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, fmt.Errorf(addPersonError, err)
+		return 0, fmt.Errorf(errorMessage, err)
 	}
 
-	if gender, ok := values["gender"]; ok {
-		gender, err := helpers.InterfaceToString(gender)
-		if err != nil {
-			helpers.ExecuteWithLogError(tx.Rollback, p.log)
-			return 0, fmt.Errorf(addPersonError, err)
-		}
-
-		genderId, err := p.handler.GetAdditionalId(ctx, tx, gender, postgrequeries.GendersTable)
-		if err != nil {
-			helpers.ExecuteWithLogError(tx.Rollback, p.log)
-			return 0, fmt.Errorf(addPersonError, err)
-		}
-
-		delete(values, "gender")
-		values["gender_id"] = strconv.FormatInt(genderId, 10)
-	}
-
-	if country, ok := values["country"]; ok {
-		country, err := helpers.InterfaceToString(country)
-		if err != nil {
-			helpers.ExecuteWithLogError(tx.Rollback, p.log)
-			return 0, fmt.Errorf(addPersonError, err)
-		}
-
-		countryId, err := p.handler.GetAdditionalId(ctx, tx, country, postgrequeries.CountriesTable)
-		if err != nil {
-			helpers.ExecuteWithLogError(tx.Rollback, p.log)
-			return 0, fmt.Errorf(addPersonError, err)
-		}
-
-		delete(values, "country")
-		values["country_id"] = strconv.FormatInt(countryId, 10)
+	err = p.replaceRefValues(ctx, tx, values)
+	if err != nil {
+		helpers.ExecuteWithLogError(tx.Rollback, p.log)
+		return 0, fmt.Errorf(errorMessage, err)
 	}
 
 	affectedCount, err := p.handler.UpdatePartialPersonById(ctx, tx, id, values)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return 0, fmt.Errorf(addPersonError, err)
+		return 0, fmt.Errorf(errorMessage, err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return 0, fmt.Errorf(addPersonError, err)
+		return 0, fmt.Errorf(errorMessage, err)
 	}
 
 	p.log.Info("[postgresDB:UpdatePartiallyPersonById] transaction successful")
@@ -281,8 +253,8 @@ func (p *postgresDB) replaceRefValues(ctx context.Context, tx *sql.Tx, values ma
 				return fmt.Errorf(errorMessage, err)
 			}
 
-			delete(values, "gender")
-			values["gender_id"] = strconv.FormatInt(valId, 10)
+			delete(values, value.name)
+			values[value.name+"_id"] = strconv.FormatInt(valId, 10)
 		}
 	}
 
