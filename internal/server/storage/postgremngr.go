@@ -83,34 +83,34 @@ func (p *postgresDB) AddPerson(ctx context.Context, data *datastructs.PersonData
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.log.Info("[postgresDB:AddPerson] start 'Add person' transaction")
-	savePersonError := "add person in db: %w"
+	p.log.Info("[postgresDB:AddPerson] start transaction")
+	addPersonError := "add person in db: %w"
 	tx, err := p.database.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf(savePersonError, err)
+		return fmt.Errorf(addPersonError, err)
 	}
 
 	genderId, err := p.handler.GetAdditionalId(ctx, tx, data.Gender, postgrequeries.GendersTable)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return fmt.Errorf(savePersonError, err)
+		return fmt.Errorf(addPersonError, err)
 	}
 
 	countryId, err := p.handler.GetAdditionalId(ctx, tx, data.Country, postgrequeries.CountriesTable)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return fmt.Errorf(savePersonError, err)
+		return fmt.Errorf(addPersonError, err)
 	}
 
 	err = p.handler.InsertPerson(ctx, tx, data, genderId, countryId)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return fmt.Errorf(savePersonError, err)
+		return fmt.Errorf(addPersonError, err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return fmt.Errorf(savePersonError, err)
+		return fmt.Errorf(addPersonError, err)
 	}
 
 	p.log.Info("[postgresDB:AddPerson] transaction successful")
@@ -129,7 +129,26 @@ func (p *postgresDB) DeletePersonDataById(ctx context.Context, personId int64) e
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.log.Info("DeletePersonDataById is not implemented")
+	p.log.Info("[postgresDB:AddPerson] start transaction")
+	deletePersonError := "delete person in db: %w"
+	tx, err := p.database.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf(deletePersonError, err)
+	}
+
+	err = p.handler.DeletePerson(ctx, tx, personId)
+	if err != nil {
+		helpers.ExecuteWithLogError(tx.Rollback, p.log)
+		return fmt.Errorf(deletePersonError, err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf(deletePersonError, err)
+	}
+
+	p.log.Info("[postgresDB:AddPerson] transaction successful")
+
 	return nil
 }
 

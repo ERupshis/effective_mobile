@@ -33,9 +33,9 @@ func (c *Controller) Route() *chi.Mux {
 	r.Use(c.log.LogHandler)
 
 	r.Post("/", c.createPersonHandler)
-	r.Delete("/{id}", c.deletePersonByIdHandler)
-	r.Put("/{id}", c.updatePersonByIdHandler)
-	r.Patch("/{id}", c.updatePersonByIdPartiallyHandler)
+	r.Delete("/", c.deletePersonByIdHandler)
+	r.Put("/", c.updatePersonByIdHandler)
+	r.Patch("/", c.updatePersonByIdPartiallyHandler)
 	r.Get("/", c.getPersonsByFilterHandler)
 
 	r.NotFound(c.badRequestHandler)
@@ -83,7 +83,13 @@ func (c *Controller) createPersonHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func (c *Controller) deletePersonByIdHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	values := r.URL.Query()
+	if values.Get("id") == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(values.Get("id"))
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return

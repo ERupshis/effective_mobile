@@ -58,7 +58,7 @@ func CreateHandler(log logger.BaseLogger) QueriesHandler {
 }
 
 func (q *QueriesHandler) InsertPerson(ctx context.Context, tx *sql.Tx, personData *datastructs.PersonData, genderId int64, countryId int64) error {
-	errorMsg := fmt.Sprintf("insert person '%v' in '%s': %w", personData, PersonsTable)
+	errorMsg := fmt.Sprintf("insert person '%v' in '%s'", personData, PersonsTable) + ": %w"
 
 	stmt, err := createInsertPersonStmt(ctx, tx)
 	if err != nil {
@@ -101,8 +101,43 @@ func createInsertPersonStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) 
 	return tx.PrepareContext(ctx, psqlInsert)
 }
 
+func (q *QueriesHandler) DeletePerson(ctx context.Context, tx *sql.Tx, id int64) error {
+	errorMsg := fmt.Sprintf("delete person by id '%v' in '%s", id, PersonsTable) + ": %w"
+
+	stmt, err := createDeletePersonStmt(ctx, tx)
+	if err != nil {
+		return fmt.Errorf(errorMsg, err)
+	}
+	defer helpers.ExecuteWithLogError(stmt.Close, q.log)
+
+	query := func(context context.Context) error {
+		_, err = stmt.ExecContext(context, id)
+		return err
+	}
+	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
+	if err != nil {
+		return fmt.Errorf(errorMsg, err)
+	}
+
+	return nil
+}
+
+func createDeletePersonStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	psqlInsert, _, err := psql.Delete(GetTableFullName(PersonsTable)).
+		Where(sq.Eq{"id": "?"}). // Assuming "id" is the column to match for deletion
+		ToSql()
+
+	if err != nil {
+		return nil, fmt.Errorf("squirrel sql insert statement for '"+GetTableFullName(PersonsTable)+"': %w", err)
+
+	}
+	return tx.PrepareContext(ctx, psqlInsert)
+}
+
 func (q *QueriesHandler) GetAdditionalId(ctx context.Context, tx *sql.Tx, name string, table string) (int64, error) {
-	errorMsg := fmt.Sprintf("get additional id for '%s' in '%s': %w", name, table)
+	errorMsg := fmt.Sprintf("get additional id for '%s' in '%s'", name, table) + ": %w"
 
 	stmt, err := createSelectAdditionalIdStmt(ctx, tx, name, table)
 	if err != nil {
@@ -145,7 +180,7 @@ func createSelectAdditionalIdStmt(ctx context.Context, tx *sql.Tx, name string, 
 }
 
 func (q *QueriesHandler) InsertAdditionalId(ctx context.Context, tx *sql.Tx, name string, table string) (int64, error) {
-	errorMsg := fmt.Sprintf("insert additional value for '%s' in '%s': %w", name, table)
+	errorMsg := fmt.Sprintf("insert additional value for '%s' in '%s'", name, table) + ": %w"
 
 	stmt, err := createInsertAdditionalIdStmt(ctx, tx, name, table)
 	if err != nil {
