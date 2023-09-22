@@ -20,9 +20,21 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 	}
 
 	attempt := 0
+	var cancels []context.CancelFunc
+	go func() {
+		sleepTime := 0
+		for _, t := range intervals {
+			sleepTime += t
+		}
+		time.Sleep(time.Duration(sleepTime) * time.Second)
+
+		for _, cancel := range cancels {
+			cancel()
+		}
+	}()
 	for _, interval := range intervals {
-		//goland:noinspection ALL
-		ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
+		ctxWithTime, cancel := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
+		cancels = append(cancels, cancel)
 		status, body, err = callback(ctxWithTime)
 		if err == nil {
 			return status, body, nil
@@ -50,8 +62,22 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 	}
 
 	attemptNum := 0
+	var cancels []context.CancelFunc
+	go func() {
+		sleepTime := 0
+		for _, t := range intervals {
+			sleepTime += t
+		}
+		time.Sleep(time.Duration(sleepTime) * time.Second)
+
+		for _, cancel := range cancels {
+			cancel()
+		}
+	}()
 	for _, interval := range intervals {
-		err = callFunc(ctx, interval, callback)
+		ctxWithTime, cancel := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
+		cancels = append(cancels, cancel)
+		err = callback(ctxWithTime)
 		if err == nil {
 			return nil
 		}
@@ -68,17 +94,6 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 	}
 
 	return err
-}
-
-func callFunc(ctx context.Context, interval int, callback func(context.Context) error) error {
-	//goland:noinspection ALL
-	ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
-	err := callback(ctxWithTime)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func canRetryCall(err error, repeatableErrors []error) bool {
