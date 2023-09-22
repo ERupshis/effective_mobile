@@ -2,6 +2,7 @@ package retryer
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/erupshis/effective_mobile/internal/logger"
@@ -26,20 +27,25 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 
 	attempt := 0
 	var cancels []ctxStruct
+	mu := sync.Mutex{}
 	go func() {
 		sleepTime := 0
 		for _, t := range intervals {
 			sleepTime += t
 		}
-		time.Sleep(time.Duration(sleepTime) * time.Second)
+		time.Sleep(time.Duration(sleepTime+2) * time.Second)
 
+		mu.Lock()
 		for _, ctxToCancel := range cancels {
 			ctxToCancel.cancel()
 		}
+		mu.Unlock()
 	}()
 	for _, interval := range intervals {
 		ctxWithTime, cancel := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
+		mu.Lock()
 		cancels = append(cancels, ctxStruct{ctxWithTime, cancel})
+		mu.Unlock()
 		status, body, err = callback(ctxWithTime)
 		if err == nil {
 			return status, body, nil
@@ -69,20 +75,25 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 	attemptNum := 0
 
 	var cancels []ctxStruct
+	mu := sync.Mutex{}
 	go func() {
 		sleepTime := 0
 		for _, t := range intervals {
 			sleepTime += t
 		}
-		time.Sleep(time.Duration(sleepTime) * time.Second)
+		time.Sleep(time.Duration(sleepTime+2) * time.Second)
 
+		mu.Lock()
 		for _, ctxToCancel := range cancels {
 			ctxToCancel.cancel()
 		}
+		mu.Unlock()
 	}()
 	for _, interval := range intervals {
 		ctxWithTime, cancel := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
+		mu.Lock()
 		cancels = append(cancels, ctxStruct{ctxWithTime, cancel})
+		mu.Unlock()
 		err = callback(ctxWithTime)
 		if err == nil {
 			return nil
