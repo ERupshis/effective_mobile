@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/jackc/pgerrcode"
@@ -88,17 +87,9 @@ func TestRetryCallWithTimeout(t *testing.T) {
 				intervals:        []int{1, 1, 1},
 				repeatableErrors: nil,
 				callback: func(ctx context.Context) (int64, []byte, error) {
-					currentTime := time.Now()
-					for {
-						select {
-						case <-ctx.Done():
-							return http.StatusRequestTimeout, []byte{}, errors.New(pgerrcode.ConnectionException)
-						default:
-							if time.Since(currentTime) > 10*time.Second {
-								return http.StatusOK, []byte{}, nil
-							}
-							time.Sleep(50 * time.Millisecond)
-						}
+					select {
+					case <-ctx.Done():
+						return http.StatusRequestTimeout, []byte{}, errors.New(pgerrcode.ConnectionException)
 					}
 				},
 			},
@@ -125,17 +116,10 @@ func TestRetryCallWithTimeout(t *testing.T) {
 				intervals:        []int{1, 1, 1},
 				repeatableErrors: databaseErrorsToRetry,
 				callback: func(ctx context.Context) (int64, []byte, error) {
-					currentTime := time.Now()
-					for {
-						select {
-						case <-ctx.Done():
-							return http.StatusRequestTimeout, []byte{}, errors.New(pgerrcode.ConnectionException)
-						default:
-							if time.Since(currentTime) > 10*time.Second {
-								return http.StatusOK, []byte{}, nil
-							}
-							time.Sleep(50 * time.Millisecond)
-						}
+
+					select {
+					case <-ctx.Done():
+						return http.StatusRequestTimeout, []byte{}, errors.New(pgerrcode.ConnectionException)
 					}
 				},
 			},
@@ -149,17 +133,9 @@ func TestRetryCallWithTimeout(t *testing.T) {
 				intervals:        []int{1, 1, 1},
 				repeatableErrors: databaseErrorsToRetry,
 				callback: func(ctx context.Context) (int64, []byte, error) {
-					currentTime := time.Now()
-					for {
-						select {
-						case <-ctx.Done():
-							return http.StatusRequestTimeout, []byte{}, errors.New("some error")
-						default:
-							if time.Since(currentTime) > 10*time.Second {
-								return http.StatusOK, []byte{}, nil
-							}
-							time.Sleep(50 * time.Millisecond)
-						}
+					select {
+					case <-ctx.Done():
+						return http.StatusRequestTimeout, []byte{}, errors.New("some error")
 					}
 				},
 			},
