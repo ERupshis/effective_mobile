@@ -87,10 +87,9 @@ func TestRetryCallWithTimeout(t *testing.T) {
 				intervals:        []int{1, 1, 1},
 				repeatableErrors: nil,
 				callback: func(ctx context.Context) (int64, []byte, error) {
-					select {
-					case <-ctx.Done():
-						return http.StatusRequestTimeout, []byte{}, errors.New(pgerrcode.ConnectionException)
-					}
+					<-ctx.Done()
+					return http.StatusRequestTimeout, []byte{}, errors.New(pgerrcode.ConnectionException)
+
 				},
 			},
 			wantErr: errors.New(pgerrcode.ConnectionException),
@@ -116,11 +115,8 @@ func TestRetryCallWithTimeout(t *testing.T) {
 				intervals:        []int{1, 1, 1},
 				repeatableErrors: databaseErrorsToRetry,
 				callback: func(ctx context.Context) (int64, []byte, error) {
-
-					select {
-					case <-ctx.Done():
-						return http.StatusRequestTimeout, []byte{}, errors.New(pgerrcode.ConnectionException)
-					}
+					<-ctx.Done()
+					return http.StatusRequestTimeout, []byte{}, errors.New(pgerrcode.ConnectionException)
 				},
 			},
 			wantErr: errors.New(pgerrcode.ConnectionException),
@@ -133,10 +129,8 @@ func TestRetryCallWithTimeout(t *testing.T) {
 				intervals:        []int{1, 1, 1},
 				repeatableErrors: databaseErrorsToRetry,
 				callback: func(ctx context.Context) (int64, []byte, error) {
-					select {
-					case <-ctx.Done():
-						return http.StatusRequestTimeout, []byte{}, errors.New("some error")
-					}
+					<-ctx.Done()
+					return http.StatusRequestTimeout, []byte{}, errors.New("some error")
 				},
 			},
 			wantErr: errors.New("some error"),
