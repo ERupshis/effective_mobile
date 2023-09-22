@@ -243,8 +243,9 @@ func (c *Controller) getPersonsByFilterHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	_, _ = w.Write(responseBody)
+	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
 	w.Header().Add("Content-Type", "application/json")
+	_, _ = w.Write(responseBody)
 }
 
 func (c *Controller) badRequestHandler(w http.ResponseWriter, _ *http.Request) {

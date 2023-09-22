@@ -9,6 +9,11 @@ import (
 
 var defIntervals = []int{1, 3, 5}
 
+type ctxStruct struct {
+	ctx    context.Context
+	cancel context.CancelFunc
+}
+
 func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals []int, repeatableErrors []error,
 	callback func(context.Context) (int64, []byte, error)) (int64, []byte, error) {
 	var status int64
@@ -20,7 +25,7 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 	}
 
 	attempt := 0
-	var cancels []context.CancelFunc
+	var cancels []ctxStruct
 	go func() {
 		sleepTime := 0
 		for _, t := range intervals {
@@ -28,13 +33,13 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 		}
 		time.Sleep(time.Duration(sleepTime) * time.Second)
 
-		for _, cancel := range cancels {
-			cancel()
+		for _, ctxToCancel := range cancels {
+			ctxToCancel.cancel()
 		}
 	}()
 	for _, interval := range intervals {
 		ctxWithTime, cancel := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
-		cancels = append(cancels, cancel)
+		cancels = append(cancels, ctxStruct{ctxWithTime, cancel})
 		status, body, err = callback(ctxWithTime)
 		if err == nil {
 			return status, body, nil
@@ -62,7 +67,8 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 	}
 
 	attemptNum := 0
-	var cancels []context.CancelFunc
+
+	var cancels []ctxStruct
 	go func() {
 		sleepTime := 0
 		for _, t := range intervals {
@@ -70,13 +76,13 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 		}
 		time.Sleep(time.Duration(sleepTime) * time.Second)
 
-		for _, cancel := range cancels {
-			cancel()
+		for _, ctxToCancel := range cancels {
+			ctxToCancel.cancel()
 		}
 	}()
 	for _, interval := range intervals {
 		ctxWithTime, cancel := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
-		cancels = append(cancels, cancel)
+		cancels = append(cancels, ctxStruct{ctxWithTime, cancel})
 		err = callback(ctxWithTime)
 		if err == nil {
 			return nil
