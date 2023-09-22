@@ -131,7 +131,7 @@ func createDeletePersonStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) 
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 	psqlInsert, _, err := psql.Delete(GetTableFullName(PersonsTable)).
-		Where(sq.Eq{"id": "?"}). // Assuming "id" is the column to match for deletion
+		Where(sq.Eq{"id": "?"}).
 		ToSql()
 
 	if err != nil {
@@ -144,7 +144,12 @@ func createDeletePersonStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) 
 func (q *QueriesHandler) UpdatePersonById(ctx context.Context, tx *sql.Tx, id int64, personData *datastructs.PersonData, genderId int64, countryId int64) (int64, error) {
 	errorMsg := fmt.Sprintf("update person by id '%d' with data '%v' in '%s'", id, personData, PersonsTable) + ": %w"
 
-	stmt, err := createUpdatePersonByIdStmt(ctx, tx)
+	var columnsToUpdate []string
+	for _, col := range ColumnsInPersonsTable {
+		columnsToUpdate = append(columnsToUpdate, col)
+	}
+
+	stmt, err := createUpdatePersonByIdStmt(ctx, tx, columnsToUpdate)
 	if err != nil {
 		return 0, fmt.Errorf(errorMsg, err)
 	}
@@ -177,11 +182,49 @@ func (q *QueriesHandler) UpdatePersonById(ctx context.Context, tx *sql.Tx, id in
 	return count, nil
 }
 
-func createUpdatePersonByIdStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) {
+func (q *QueriesHandler) UpdatePartialPersonById(ctx context.Context, tx *sql.Tx, id int64, values map[string]interface{}) (int64, error) {
+	errorMsg := fmt.Sprintf("update partially person by id '%d' with data '%v' in '%s'", id, values, PersonsTable) + ": %w"
+
+	var columnsToUpdate []string
+	var valuesToUpdate []interface{}
+	for key, val := range values {
+		columnsToUpdate = append(columnsToUpdate, key)
+		valuesToUpdate = append(valuesToUpdate, val)
+	}
+	valuesToUpdate = append(valuesToUpdate, id)
+
+	stmt, err := createUpdatePersonByIdStmt(ctx, tx, columnsToUpdate)
+	if err != nil {
+		return 0, fmt.Errorf(errorMsg, err)
+	}
+	defer helpers.ExecuteWithLogError(stmt.Close, q.log)
+
+	var result sql.Result
+	query := func(context context.Context) error {
+		result, err = stmt.ExecContext(
+			context,
+			valuesToUpdate...,
+		)
+		return err
+	}
+	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
+	if err != nil {
+		return 0, fmt.Errorf(errorMsg, err)
+	}
+
+	count, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf(errorMsg, err)
+	}
+
+	return count, nil
+}
+
+func createUpdatePersonByIdStmt(ctx context.Context, tx *sql.Tx, values []string) (*sql.Stmt, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 	builder := psql.Update(GetTableFullName(PersonsTable))
-	for _, col := range ColumnsInPersonsTable {
+	for _, col := range values {
 		builder = builder.Set(col, "?")
 	}
 	builder = builder.Where(sq.Eq{"id": "?"})

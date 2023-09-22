@@ -163,23 +163,51 @@ func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *Controller) updatePersonByIdPartiallyHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	values := r.URL.Query()
+	if values.Get("id") == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(values.Get("id"))
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
 
-	valuesToUpdate, err := httphelper.ParseQueryValuesIntoMap(r.URL.Query())
+	buf := bytes.Buffer{}
+	if _, err := buf.ReadFrom(r.Body); err != nil {
+		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] failed to read request body: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer helpers.ExecuteWithLogError(r.Body.Close, c.log)
+
+	var valuesToUpdate map[string]interface{}
+	err = json.Unmarshal(buf.Bytes(), &valuesToUpdate)
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] failed to parse query params: %v", err)
-		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	err = c.strg.UpdatePersonByIdPartially(r.Context(), int64(id), valuesToUpdate)
+	valuesToUpdate = httphelper.FilterValues(valuesToUpdate)
+	if len(valuesToUpdate) == 0 {
+		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] missing values to update in request '%v'", buf.Bytes())
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+
+	affectedCount, err := c.strg.UpdatePersonByIdPartially(r.Context(), int64(id), valuesToUpdate)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:updatePersonByIdPartiallyHandler] cannot process: %v", err)
+		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] cannot process: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if affectedCount == 0 {
+		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] request has no effect with id '%d'", id)
+		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 

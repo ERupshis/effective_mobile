@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/erupshis/effective_mobile/internal/datastructs"
@@ -190,10 +191,100 @@ func (p *postgresDB) UpdatePersonById(ctx context.Context, id int64, data *datas
 	return affectedCount, nil
 }
 
-func (p *postgresDB) UpdatePersonByIdPartially(ctx context.Context, personId int64, values map[string]string) error {
+func (p *postgresDB) UpdatePersonByIdPartially(ctx context.Context, id int64, values map[string]interface{}) (int64, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.log.Info("UpdatePersonByIdPartially is not implemented")
+	p.log.Info("[postgresDB:UpdatePartiallyPersonById] start transaction")
+	addPersonError := "add person in db: %w"
+	tx, err := p.database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf(addPersonError, err)
+	}
+
+	if gender, ok := values["gender"]; ok {
+		gender, err := helpers.InterfaceToString(gender)
+		if err != nil {
+			helpers.ExecuteWithLogError(tx.Rollback, p.log)
+			return 0, fmt.Errorf(addPersonError, err)
+		}
+
+		genderId, err := p.handler.GetAdditionalId(ctx, tx, gender, postgrequeries.GendersTable)
+		if err != nil {
+			helpers.ExecuteWithLogError(tx.Rollback, p.log)
+			return 0, fmt.Errorf(addPersonError, err)
+		}
+
+		delete(values, "gender")
+		values["gender_id"] = strconv.FormatInt(genderId, 10)
+	}
+
+	if country, ok := values["country"]; ok {
+		country, err := helpers.InterfaceToString(country)
+		if err != nil {
+			helpers.ExecuteWithLogError(tx.Rollback, p.log)
+			return 0, fmt.Errorf(addPersonError, err)
+		}
+
+		countryId, err := p.handler.GetAdditionalId(ctx, tx, country, postgrequeries.CountriesTable)
+		if err != nil {
+			helpers.ExecuteWithLogError(tx.Rollback, p.log)
+			return 0, fmt.Errorf(addPersonError, err)
+		}
+
+		delete(values, "country")
+		values["country_id"] = strconv.FormatInt(countryId, 10)
+	}
+
+	affectedCount, err := p.handler.UpdatePartialPersonById(ctx, tx, id, values)
+	if err != nil {
+		helpers.ExecuteWithLogError(tx.Rollback, p.log)
+		return 0, fmt.Errorf(addPersonError, err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, fmt.Errorf(addPersonError, err)
+	}
+
+	p.log.Info("[postgresDB:UpdatePartiallyPersonById] transaction successful")
+	return affectedCount, nil
+}
+
+func (p *postgresDB) replaceRefValues(ctx context.Context, tx *sql.Tx, values map[string]interface{}) error {
+	valuesToReplace := []struct {
+		name  string
+		table string
+	}{
+		{
+			name:  "gender",
+			table: postgrequeries.GendersTable,
+		},
+		{
+			name:  "country",
+			table: postgrequeries.CountriesTable,
+		},
+	}
+
+	errorMessage := "replace reference fields in db: %w"
+	for _, value := range valuesToReplace {
+		if incomingVal, ok := values[value.name]; ok {
+			incomingVal, err := helpers.InterfaceToString(incomingVal)
+			if err != nil {
+				helpers.ExecuteWithLogError(tx.Rollback, p.log)
+				return fmt.Errorf(errorMessage, err)
+			}
+
+			valId, err := p.handler.GetAdditionalId(ctx, tx, incomingVal, value.table)
+			if err != nil {
+				helpers.ExecuteWithLogError(tx.Rollback, p.log)
+				return fmt.Errorf(errorMessage, err)
+			}
+
+			delete(values, "gender")
+			values["gender_id"] = strconv.FormatInt(valId, 10)
+		}
+	}
+
 	return nil
 }
