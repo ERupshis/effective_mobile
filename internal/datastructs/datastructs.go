@@ -6,12 +6,12 @@ import (
 
 //go:generate easyjson -all datastructs.go
 type PersonData struct {
-	Name        string `json:"name"`
-	Surname     string `json:"surname"`
-	Patronymic  string `json:"patronymic,omitempty"`
-	Age         int64  `json:"age,omitempty"`
-	Gender      string `json:"gender,omitempty"`
-	Nationality string `json:"country,omitempty"`
+	Name       string `json:"name"`
+	Surname    string `json:"surname"`
+	Patronymic string `json:"patronymic,omitempty"`
+	Age        int64  `json:"age,omitempty"`
+	Gender     string `json:"gender,omitempty"`
+	Country    string `json:"country,omitempty"`
 }
 
 type ErrorMessage struct {

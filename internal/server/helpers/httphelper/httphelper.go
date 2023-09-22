@@ -1,6 +1,7 @@
 package httphelper
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -8,21 +9,12 @@ import (
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 )
 
-var fieldsInPersonData = []string{"name", "surname", "age", "patronymic", "gender", "nationality"}
+var FieldsInPersonData = []string{"name", "surname", "patronymic", "age", "gender", "country"}
 
-func ParseQueryValues(values url.Values) (*datastructs.PersonData, error) {
-	personData := &datastructs.PersonData{
-		Name:        values.Get("name"),
-		Surname:     values.Get("surname"),
-		Patronymic:  values.Get("patronymic"),
-		Gender:      values.Get("gender"),
-		Nationality: values.Get("nationality"),
-	}
-
-	var err error
-	personData.Age, err = strconv.ParseInt(values.Get("age"), 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("parse 'age' in query: %w", err)
+func ParsePersonDataFromJSON(rawData []byte) (*datastructs.PersonData, error) {
+	personData := &datastructs.PersonData{}
+	if err := json.Unmarshal(rawData, &personData); err != nil {
+		return nil, fmt.Errorf("parse data to JSON: %w", err)
 	}
 
 	return personData, nil
@@ -30,7 +22,7 @@ func ParseQueryValues(values url.Values) (*datastructs.PersonData, error) {
 
 func ParseQueryValuesIntoMap(values url.Values) (map[string]string, error) {
 	res := map[string]string{}
-	for _, fieldName := range fieldsInPersonData {
+	for _, fieldName := range FieldsInPersonData {
 		if values.Has(fieldName) {
 			res[fieldName] = values.Get(fieldName)
 		}
@@ -42,6 +34,16 @@ func ParseQueryValuesIntoMap(values url.Values) (map[string]string, error) {
 	}
 
 	return res, err
+}
+
+func ParsePageAndPageSize(values url.Values) (int64, int64) {
+	rawPage := values.Get("page")
+	rawPageSize := values.Get("pageSize")
+
+	page, _ := strconv.Atoi(rawPage)
+	pageSize, _ := strconv.Atoi(rawPageSize)
+
+	return int64(page), int64(pageSize)
 }
 
 func IsPersonDataValid(data *datastructs.PersonData, allFieldsToCheck bool) (bool, error) {
@@ -64,12 +66,12 @@ func IsPersonDataValid(data *datastructs.PersonData, allFieldsToCheck bool) (boo
 		if data.Gender == "" {
 			errorNonCriticalMessage += " gender"
 		}
-		if data.Nationality == "" {
-			errorNonCriticalMessage += " nationality"
+		if data.Country == "" {
+			errorNonCriticalMessage += " country"
 		}
 	}
 
-	allFieldsEmpty := data.Name == "" && data.Surname == "" && data.Gender == "" && data.Nationality == "" && data.Age <= 0
+	allFieldsEmpty := data.Name == "" && data.Surname == "" && data.Gender == "" && data.Country == "" && data.Age <= 0
 	if allFieldsEmpty {
 		return false, fmt.Errorf("all person data fields empty")
 	}

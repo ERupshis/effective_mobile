@@ -8,35 +8,26 @@ import (
 	"sync"
 
 	"github.com/erupshis/effective_mobile/internal/datastructs"
+	"github.com/erupshis/effective_mobile/internal/helpers"
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/retryer"
 	"github.com/erupshis/effective_mobile/internal/server/config"
+	"github.com/erupshis/effective_mobile/internal/server/storage/postgrequeries"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/jackc/pgerrcode"
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
-var DatabaseErrorsToRetry = []error{
-	errors.New(pgerrcode.UniqueViolation),
-	errors.New(pgerrcode.ConnectionException),
-	errors.New(pgerrcode.ConnectionDoesNotExist),
-	errors.New(pgerrcode.ConnectionFailure),
-	errors.New(pgerrcode.SQLClientUnableToEstablishSQLConnection),
-	errors.New(pgerrcode.SQLServerRejectedEstablishmentOfSQLConnection),
-	errors.New(pgerrcode.TransactionResolutionUnknown),
-	errors.New(pgerrcode.ProtocolViolation),
-}
-
 type postgresDB struct {
 	database *sql.DB
-	log      logger.BaseLogger
+	handler  postgrequeries.QueriesHandler
 
-	mu sync.RWMutex
+	log logger.BaseLogger
+	mu  sync.RWMutex
 }
 
-func CreatePostgreDB(ctx context.Context, cfg config.Config, log logger.BaseLogger) (BaseStorageManager, error) {
+func CreatePostgreDB(ctx context.Context, cfg config.Config, queriesHandler postgrequeries.QueriesHandler, log logger.BaseLogger) (BaseStorageManager, error) {
 	log.Info("[storage:CreatePostgreDB] open database with settings: '%s'", cfg.DatabaseDSN)
 	createDatabaseError := "create db: %w"
 	database, err := sql.Open("pgx", cfg.DatabaseDSN)
@@ -61,6 +52,7 @@ func CreatePostgreDB(ctx context.Context, cfg config.Config, log logger.BaseLogg
 
 	manager := &postgresDB{
 		database: database,
+		handler:  queriesHandler,
 		log:      log,
 	}
 
@@ -76,7 +68,7 @@ func (p *postgresDB) CheckConnection(ctx context.Context) (bool, error) {
 	exec := func(context context.Context) (int64, []byte, error) {
 		return 0, []byte{}, p.database.PingContext(context)
 	}
-	_, _, err := retryer.RetryCallWithTimeout(ctx, p.log, nil, DatabaseErrorsToRetry, exec)
+	_, _, err := retryer.RetryCallWithTimeout(ctx, p.log, nil, postgrequeries.DatabaseErrorsToRetry, exec)
 	if err != nil {
 		return false, fmt.Errorf("check connection: %w", err)
 	}
@@ -87,34 +79,72 @@ func (p *postgresDB) Close() error {
 	return p.database.Close()
 }
 
-func (p *postgresDB) AddPersonData(ctx context.Context, data *datastructs.PersonData) error {
+func (p *postgresDB) AddPerson(ctx context.Context, data *datastructs.PersonData) error {
 	p.mu.Lock()
-	p.log.Info("AddPersonData is not implemented")
 	defer p.mu.Unlock()
-	//TODO:
+
+	p.log.Info("[postgresDB:AddPerson] start 'Add person' transaction")
+	savePersonError := "add person in db: %w"
+	tx, err := p.database.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf(savePersonError, err)
+	}
+
+	genderId, err := p.handler.GetAdditionalId(ctx, tx, data.Gender, postgrequeries.GendersTable)
+	if err != nil {
+		helpers.ExecuteWithLogError(tx.Rollback, p.log)
+		return fmt.Errorf(savePersonError, err)
+	}
+
+	countryId, err := p.handler.GetAdditionalId(ctx, tx, data.Country, postgrequeries.CountriesTable)
+	if err != nil {
+		helpers.ExecuteWithLogError(tx.Rollback, p.log)
+		return fmt.Errorf(savePersonError, err)
+	}
+
+	err = p.handler.InsertPerson(ctx, tx, data, genderId, countryId)
+	if err != nil {
+		helpers.ExecuteWithLogError(tx.Rollback, p.log)
+		return fmt.Errorf(savePersonError, err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf(savePersonError, err)
+	}
+
+	p.log.Info("[postgresDB:AddPerson] transaction successful")
 	return nil
 }
 
-func (p *postgresDB) GetPersonsData(ctx context.Context, filters map[string]string, pageLimit int64, offset int64) ([]datastructs.PersonData, error) {
-	//TODO:
-	p.log.Info("GetPersonsData is not implemented")
+func (p *postgresDB) GetPersons(ctx context.Context, filters map[string]string, page int64, pageSize int64) ([]datastructs.PersonData, error) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	p.log.Info("GetPersons is not implemented")
 	return []datastructs.PersonData{}, nil
 }
 
 func (p *postgresDB) DeletePersonDataById(ctx context.Context, personId int64) error {
-	//TODO:
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	p.log.Info("DeletePersonDataById is not implemented")
 	return nil
 }
 
-func (p *postgresDB) UpdatePersonDataById(ctx context.Context, personId int64, data *datastructs.PersonData) error {
-	//TODO:
-	p.log.Info("UpdatePersonDataById is not implemented")
+func (p *postgresDB) UpdatePersonById(ctx context.Context, personId int64, data *datastructs.PersonData) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.log.Info("UpdatePersonById is not implemented")
 	return nil
 }
 
-func (p *postgresDB) UpdatePersonDataByIdPartially(ctx context.Context, personId int64, values map[string]string) error {
-	//TODO:
-	p.log.Info("UpdatePersonDataByIdPartially is not implemented")
+func (p *postgresDB) UpdatePersonByIdPartially(ctx context.Context, personId int64, values map[string]string) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	p.log.Info("UpdatePersonByIdPartially is not implemented")
 	return nil
 }

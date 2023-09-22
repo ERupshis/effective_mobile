@@ -1,10 +1,12 @@
 package httpctrl
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"github.com/erupshis/effective_mobile/internal/datastructs"
+	"github.com/erupshis/effective_mobile/internal/helpers"
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/server/helpers/httphelper"
 	"github.com/erupshis/effective_mobile/internal/server/storage"
@@ -42,7 +44,21 @@ func (c *Controller) Route() *chi.Mux {
 }
 
 func (c *Controller) createPersonHandler(w http.ResponseWriter, r *http.Request) {
-	personData, err := httphelper.ParseQueryValues(r.URL.Query())
+	buf := bytes.Buffer{}
+	if _, err := buf.ReadFrom(r.Body); err != nil {
+		c.log.Info("["+packageName+":Controller:createPersonHandler] failed to read request body: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer helpers.ExecuteWithLogError(r.Body.Close, c.log)
+
+	if len(buf.Bytes()) == 0 {
+		c.log.Info("[" + packageName + ":Controller:createPersonHandler] empty request's body")
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	personData, err := httphelper.ParsePersonDataFromJSON(buf.Bytes())
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:createPersonHandler] failed to parse query params: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -56,7 +72,7 @@ func (c *Controller) createPersonHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = c.strg.AddPersonData(r.Context(), personData)
+	err = c.strg.AddPerson(r.Context(), personData)
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:createPersonHandler] cannot process: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -90,7 +106,15 @@ func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	personData, err := httphelper.ParseQueryValues(r.URL.Query())
+	buf := bytes.Buffer{}
+	if _, err := buf.ReadFrom(r.Body); err != nil {
+		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] failed to read request body: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer helpers.ExecuteWithLogError(r.Body.Close, c.log)
+
+	personData, err := httphelper.ParsePersonDataFromJSON(buf.Bytes())
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] failed to parse query params: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -99,12 +123,12 @@ func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 
 	_, err = httphelper.IsPersonDataValid(personData, true)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] person data is not valid: %v", err)
+		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] data validation: %v", err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
 
-	err = c.strg.UpdatePersonDataById(r.Context(), int64(id), personData)
+	err = c.strg.UpdatePersonById(r.Context(), int64(id), personData)
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] cannot process: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -128,7 +152,7 @@ func (c *Controller) updatePersonByIdPartiallyHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	err = c.strg.UpdatePersonDataByIdPartially(r.Context(), int64(id), valuesToUpdate)
+	err = c.strg.UpdatePersonByIdPartially(r.Context(), int64(id), valuesToUpdate)
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:updatePersonByIdPartiallyHandler] cannot process: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -142,18 +166,24 @@ func (c *Controller) getPersonsByFilterHandler(w http.ResponseWriter, r *http.Re
 	values := r.URL.Query()
 	valuesToFilter, _ := httphelper.ParseQueryValuesIntoMap(values)
 
-	//TODO: handling limit and offset.
+	page, pageSize := httphelper.ParsePageAndPageSize(values)
 
-	personsData, err := c.strg.GetPersonsData(r.Context(), valuesToFilter, 0, 0)
+	personsData, err := c.strg.GetPersons(r.Context(), valuesToFilter, page, pageSize)
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:getPersonsByFilterHandler] cannot process: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	//TODO: write personsData in response body as Json
-	personsData = append(personsData, datastructs.PersonData{})
+	var responseBody []byte
+	if responseBody, err = json.Marshal(personsData); err != nil {
+		c.log.Info("["+packageName+":Controller:getPersonsByFilterHandler] convert request result into JSON failed: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
+	_, _ = w.Write(responseBody)
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 }
 

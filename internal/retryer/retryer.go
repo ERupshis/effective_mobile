@@ -45,6 +45,41 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 	return status, body, err
 }
 
+func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, intervals []int, repeatableErrors []error,
+	callback func(context.Context) error) error {
+	var err error
+
+	if intervals == nil {
+		intervals = defIntervals
+	}
+
+	attempt := 0
+	for _, interval := range intervals {
+		ctxWithTime, cancel := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
+		err = callback(ctxWithTime)
+		if err == nil {
+			cancel()
+			return nil
+		}
+
+		<-ctxWithTime.Done()
+
+		attempt++
+		if log != nil {
+			log.Info("attempt '%d' to postJSON failed with error: %v", attempt, err)
+		}
+
+		if !canRetryCall(err, repeatableErrors) {
+			log.Info("this kind of error is not retriable: %w", err)
+			cancel()
+			break
+		}
+		cancel()
+	}
+
+	return err
+}
+
 func canRetryCall(err error, repeatableErrors []error) bool {
 	if repeatableErrors == nil {
 		return true

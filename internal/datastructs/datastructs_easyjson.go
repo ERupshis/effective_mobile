@@ -48,7 +48,7 @@ func easyjson1cf0b278DecodeGithubComErupshisEffectiveMobileInternalDatastructs(i
 		case "gender":
 			out.Gender = string(in.String())
 		case "country":
-			out.Nationality = string(in.String())
+			out.Country = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -88,10 +88,10 @@ func easyjson1cf0b278EncodeGithubComErupshisEffectiveMobileInternalDatastructs(o
 		out.RawString(prefix)
 		out.String(string(in.Gender))
 	}
-	if in.Nationality != "" {
+	if in.Country != "" {
 		const prefix string = ",\"country\":"
 		out.RawString(prefix)
-		out.String(string(in.Nationality))
+		out.String(string(in.Country))
 	}
 	out.RawByte('}')
 }

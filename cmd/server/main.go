@@ -18,6 +18,7 @@ import (
 	"github.com/erupshis/effective_mobile/internal/server/controllers/msgbrokerctrl"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/msgsavectrl"
 	"github.com/erupshis/effective_mobile/internal/server/storage"
+	"github.com/erupshis/effective_mobile/internal/server/storage/postgrequeries"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -63,7 +64,8 @@ func main() {
 	go extraController.Run(ctxWithCancel)
 
 	//storage.
-	strg, err := storage.CreatePostgreDB(ctxWithCancel, cfg, log)
+	queriesHandler := postgrequeries.CreateHandler(log)
+	strg, err := storage.CreatePostgreDB(ctxWithCancel, cfg, queriesHandler, log)
 	if err != nil {
 		log.Info("failed to connect to storage: %v", err)
 		return
