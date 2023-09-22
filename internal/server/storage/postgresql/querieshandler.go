@@ -228,9 +228,7 @@ func (q *QueriesHandler) UpdatePersonById(ctx context.Context, tx *sql.Tx, id in
 	errorMsg := fmt.Sprintf("update person by id '%d' with data '%v' in '%s'", id, personData, PersonsTable) + ": %w"
 
 	var columnsToUpdate []string
-	for _, col := range ColumnsInPersonsTable {
-		columnsToUpdate = append(columnsToUpdate, col)
-	}
+	columnsToUpdate = append(columnsToUpdate, ColumnsInPersonsTable...)
 
 	stmt, err := createUpdatePersonByIdStmt(ctx, tx, columnsToUpdate)
 	if err != nil {
