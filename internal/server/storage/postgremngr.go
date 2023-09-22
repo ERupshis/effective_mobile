@@ -125,39 +125,69 @@ func (p *postgresDB) GetPersons(ctx context.Context, filters map[string]string, 
 	return []datastructs.PersonData{}, nil
 }
 
-func (p *postgresDB) DeletePersonDataById(ctx context.Context, personId int64) error {
+func (p *postgresDB) DeletePersonById(ctx context.Context, personId int64) (int64, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.log.Info("[postgresDB:AddPerson] start transaction")
+	p.log.Info("[postgresDB:DeletePerson] start transaction")
 	deletePersonError := "delete person in db: %w"
 	tx, err := p.database.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf(deletePersonError, err)
+		return 0, fmt.Errorf(deletePersonError, err)
 	}
 
-	err = p.handler.DeletePerson(ctx, tx, personId)
+	affectedCount, err := p.handler.DeletePerson(ctx, tx, personId)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return fmt.Errorf(deletePersonError, err)
+		return 0, fmt.Errorf(deletePersonError, err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return fmt.Errorf(deletePersonError, err)
+		return 0, fmt.Errorf(deletePersonError, err)
 	}
 
-	p.log.Info("[postgresDB:AddPerson] transaction successful")
+	p.log.Info("[postgresDB:DeletePerson] transaction successful")
 
-	return nil
+	return affectedCount, nil
 }
 
-func (p *postgresDB) UpdatePersonById(ctx context.Context, personId int64, data *datastructs.PersonData) error {
+func (p *postgresDB) UpdatePersonById(ctx context.Context, id int64, data *datastructs.PersonData) (int64, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	p.log.Info("UpdatePersonById is not implemented")
-	return nil
+	p.log.Info("[postgresDB:UpdatePersonById] start transaction")
+	addPersonError := "add person in db: %w"
+	tx, err := p.database.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf(addPersonError, err)
+	}
+
+	genderId, err := p.handler.GetAdditionalId(ctx, tx, data.Gender, postgrequeries.GendersTable)
+	if err != nil {
+		helpers.ExecuteWithLogError(tx.Rollback, p.log)
+		return 0, fmt.Errorf(addPersonError, err)
+	}
+
+	countryId, err := p.handler.GetAdditionalId(ctx, tx, data.Country, postgrequeries.CountriesTable)
+	if err != nil {
+		helpers.ExecuteWithLogError(tx.Rollback, p.log)
+		return 0, fmt.Errorf(addPersonError, err)
+	}
+
+	affectedCount, err := p.handler.UpdatePersonById(ctx, tx, id, data, genderId, countryId)
+	if err != nil {
+		helpers.ExecuteWithLogError(tx.Rollback, p.log)
+		return 0, fmt.Errorf(addPersonError, err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return 0, fmt.Errorf(addPersonError, err)
+	}
+
+	p.log.Info("[postgresDB:UpdatePersonById] transaction successful")
+	return affectedCount, nil
 }
 
 func (p *postgresDB) UpdatePersonByIdPartially(ctx context.Context, personId int64, values map[string]string) error {

@@ -22,7 +22,7 @@ const (
 	CountriesTable = "countries"
 )
 
-var FieldsInPersonsTable = []string{"name", "surname", "patronymic", "age", "gender_id", "country_id"}
+var ColumnsInPersonsTable = []string{"name", "surname", "patronymic", "age", "gender_id", "country_id"}
 
 var DatabaseErrorsToRetry = []error{
 	errors.New(pgerrcode.UniqueViolation),
@@ -90,36 +90,41 @@ func createInsertPersonStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) 
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 	psqlInsert, _, err := psql.Insert(GetTableFullName(PersonsTable)).
-		Columns(FieldsInPersonsTable...).
-		Values(make([]interface{}, len(FieldsInPersonsTable))...).
+		Columns(ColumnsInPersonsTable...).
+		Values(make([]interface{}, len(ColumnsInPersonsTable))...).
 		ToSql()
 
 	if err != nil {
 		return nil, fmt.Errorf("squirrel sql insert statement for '"+GetTableFullName(PersonsTable)+"': %w", err)
-
 	}
 	return tx.PrepareContext(ctx, psqlInsert)
 }
 
-func (q *QueriesHandler) DeletePerson(ctx context.Context, tx *sql.Tx, id int64) error {
+func (q *QueriesHandler) DeletePerson(ctx context.Context, tx *sql.Tx, id int64) (int64, error) {
 	errorMsg := fmt.Sprintf("delete person by id '%v' in '%s", id, PersonsTable) + ": %w"
 
 	stmt, err := createDeletePersonStmt(ctx, tx)
 	if err != nil {
-		return fmt.Errorf(errorMsg, err)
+		return 0, fmt.Errorf(errorMsg, err)
 	}
 	defer helpers.ExecuteWithLogError(stmt.Close, q.log)
 
+	var result sql.Result
 	query := func(context context.Context) error {
-		_, err = stmt.ExecContext(context, id)
+		result, err = stmt.ExecContext(context, id)
 		return err
 	}
 	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
 	if err != nil {
-		return fmt.Errorf(errorMsg, err)
+		return 0, fmt.Errorf(errorMsg, err)
 	}
 
-	return nil
+	count, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf(errorMsg, err)
+	}
+
+	return count, nil
 }
 
 func createDeletePersonStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) {
@@ -130,10 +135,63 @@ func createDeletePersonStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) 
 		ToSql()
 
 	if err != nil {
-		return nil, fmt.Errorf("squirrel sql insert statement for '"+GetTableFullName(PersonsTable)+"': %w", err)
+		return nil, fmt.Errorf("squirrel sql delete statement for '"+GetTableFullName(PersonsTable)+"': %w", err)
 
 	}
 	return tx.PrepareContext(ctx, psqlInsert)
+}
+
+func (q *QueriesHandler) UpdatePersonById(ctx context.Context, tx *sql.Tx, id int64, personData *datastructs.PersonData, genderId int64, countryId int64) (int64, error) {
+	errorMsg := fmt.Sprintf("update person by id '%d' with data '%v' in '%s'", id, personData, PersonsTable) + ": %w"
+
+	stmt, err := createUpdatePersonByIdStmt(ctx, tx)
+	if err != nil {
+		return 0, fmt.Errorf(errorMsg, err)
+	}
+	defer helpers.ExecuteWithLogError(stmt.Close, q.log)
+
+	var result sql.Result
+	query := func(context context.Context) error {
+		result, err = stmt.ExecContext(
+			context,
+			personData.Name,
+			personData.Surname,
+			personData.Patronymic,
+			personData.Age,
+			genderId,
+			countryId,
+			id,
+		)
+		return err
+	}
+	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
+	if err != nil {
+		return 0, fmt.Errorf(errorMsg, err)
+	}
+
+	count, err := result.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf(errorMsg, err)
+	}
+
+	return count, nil
+}
+
+func createUpdatePersonByIdStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	builder := psql.Update(GetTableFullName(PersonsTable))
+	for _, col := range ColumnsInPersonsTable {
+		builder = builder.Set(col, "?")
+	}
+	builder = builder.Where(sq.Eq{"id": "?"})
+	psqlUpdate, _, err := builder.ToSql()
+
+	if err != nil {
+		return nil, fmt.Errorf("squirrel sql update statement for '"+GetTableFullName(PersonsTable)+"': %w", err)
+
+	}
+	return tx.PrepareContext(ctx, psqlUpdate)
 }
 
 func (q *QueriesHandler) GetAdditionalId(ctx context.Context, tx *sql.Tx, name string, table string) (int64, error) {

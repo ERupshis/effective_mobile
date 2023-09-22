@@ -95,10 +95,16 @@ func (c *Controller) deletePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = c.strg.DeletePersonDataById(r.Context(), int64(id))
+	affectedCount, err := c.strg.DeletePersonById(r.Context(), int64(id))
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:deletePersonByIdHandler] person id is not valid: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if affectedCount == 0 {
+		c.log.Info("["+packageName+":Controller:deletePersonByIdHandler] request has no effect with id '%d'", id)
+		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 
@@ -106,7 +112,13 @@ func (c *Controller) deletePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 }
 
 func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	values := r.URL.Query()
+	if values.Get("id") == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	id, err := strconv.Atoi(values.Get("id"))
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
@@ -134,10 +146,16 @@ func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = c.strg.UpdatePersonById(r.Context(), int64(id), personData)
+	affectedCount, err := c.strg.UpdatePersonById(r.Context(), int64(id), personData)
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] cannot process: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	if affectedCount == 0 {
+		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] request has no effect with id '%d'", id)
+		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 

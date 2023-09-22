@@ -54,7 +54,7 @@ func IsPersonDataValid(data *datastructs.PersonData, allFieldsToCheck bool) (boo
 		errorCriticalMessage += " name"
 	}
 
-	if data.Name == "" {
+	if data.Surname == "" {
 		errorCriticalMessage += " surname"
 	}
 
