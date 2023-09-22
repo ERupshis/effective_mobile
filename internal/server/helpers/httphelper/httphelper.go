@@ -20,8 +20,8 @@ func ParsePersonDataFromJSON(rawData []byte) (*datastructs.PersonData, error) {
 	return personData, nil
 }
 
-func ParseQueryValuesIntoMap(values url.Values) (map[string]string, error) {
-	res := map[string]string{}
+func ParseQueryValuesIntoMap(values url.Values) (map[string]interface{}, error) {
+	res := map[string]interface{}{}
 	for _, fieldName := range FieldsInPersonData {
 		if values.Has(fieldName) {
 			res[fieldName] = values.Get(fieldName)
@@ -47,8 +47,8 @@ func FilterValues(values map[string]interface{}) map[string]interface{} {
 }
 
 func ParsePageAndPageSize(values url.Values) (int64, int64) {
-	rawPage := values.Get("page")
-	rawPageSize := values.Get("pageSize")
+	rawPage := values.Get("page_num")
+	rawPageSize := values.Get("page_size")
 
 	page, _ := strconv.Atoi(rawPage)
 	pageSize, _ := strconv.Atoi(rawPageSize)

@@ -118,12 +118,30 @@ func (p *postgresDB) AddPerson(ctx context.Context, data *datastructs.PersonData
 	return nil
 }
 
-func (p *postgresDB) GetPersons(ctx context.Context, filters map[string]string, page int64, pageSize int64) ([]datastructs.PersonData, error) {
+func (p *postgresDB) GetPersons(ctx context.Context, filters map[string]interface{}, pageNum int64, pageSize int64) ([]datastructs.PersonData, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	p.log.Info("GetPersons is not implemented")
-	return []datastructs.PersonData{}, nil
+	p.log.Info("[postgresDB:GetPersons] start transaction")
+	errorMessage := "select persons in db: %w"
+	tx, err := p.database.BeginTx(ctx, nil)
+	if err != nil {
+		return []datastructs.PersonData{}, fmt.Errorf(errorMessage, err)
+	}
+
+	persons, err := p.handler.SelectPersons(ctx, tx, filters, pageNum, pageSize)
+	if err != nil {
+		helpers.ExecuteWithLogError(tx.Rollback, p.log)
+		return []datastructs.PersonData{}, fmt.Errorf(errorMessage, err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return []datastructs.PersonData{}, fmt.Errorf(errorMessage, err)
+	}
+
+	p.log.Info("[postgresDB:GetPersons] transaction successful")
+	return persons, nil
 }
 
 func (p *postgresDB) DeletePersonById(ctx context.Context, personId int64) (int64, error) {

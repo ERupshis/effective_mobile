@@ -37,6 +37,8 @@ func easyjson1cf0b278DecodeGithubComErupshisEffectiveMobileInternalDatastructs(i
 			continue
 		}
 		switch key {
+		case "id":
+			out.Id = string(in.String())
 		case "name":
 			out.Name = string(in.String())
 		case "surname":
@@ -64,8 +66,13 @@ func easyjson1cf0b278EncodeGithubComErupshisEffectiveMobileInternalDatastructs(o
 	first := true
 	_ = first
 	{
-		const prefix string = ",\"name\":"
+		const prefix string = ",\"id\":"
 		out.RawString(prefix[1:])
+		out.String(string(in.Id))
+	}
+	{
+		const prefix string = ",\"name\":"
+		out.RawString(prefix)
 		out.String(string(in.Name))
 	}
 	{

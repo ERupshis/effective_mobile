@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS persons_data.persons
     id         SERIAL PRIMARY KEY,
     name       VARCHAR(30)               NOT NULL,
     surname    VARCHAR(30)               NOT NULL,
-    patronymic VARCHAR(30),
+    patronymic VARCHAR(30) DEFAULT '',
     age        SMALLINT CHECK (age >= 0) NOT NULL,
     gender_id  SMALLINT REFERENCES persons_data.genders (id),
     country_id SMALLINT REFERENCES persons_data.countries (id)

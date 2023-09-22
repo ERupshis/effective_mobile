@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/erupshis/effective_mobile/internal/datastructs"
@@ -37,16 +36,6 @@ var DatabaseErrorsToRetry = []error{
 
 func GetTableFullName(table string) string {
 	return SchemaName + "." + table
-}
-
-func CreateValuesFormForStmt(count int) string {
-	if count <= 0 {
-		return ""
-	} else if count == 1 {
-		return "(?)"
-	} else {
-		return fmt.Sprintf("(?%s)", strings.Repeat(", ?", count-1))
-	}
 }
 
 type QueriesHandler struct {
@@ -98,6 +87,100 @@ func createInsertPersonStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) 
 		return nil, fmt.Errorf("squirrel sql insert statement for '"+GetTableFullName(PersonsTable)+"': %w", err)
 	}
 	return tx.PrepareContext(ctx, psqlInsert)
+}
+
+func (q *QueriesHandler) SelectPersons(ctx context.Context, tx *sql.Tx, filters map[string]interface{}, pageNum int64, pageSize int64) ([]datastructs.PersonData, error) {
+	errorMsg := fmt.Sprintf("select persons with filter '%v' in '%s'", filters, PersonsTable) + ": %w"
+
+	stmt, err := createSelectPersonsStmt(ctx, tx, filters, pageNum, pageSize)
+	if err != nil {
+		return nil, fmt.Errorf(errorMsg, err)
+	}
+	defer helpers.ExecuteWithLogError(stmt.Close, q.log)
+
+	var valuesToUpdate []interface{}
+	for _, val := range filters {
+		valuesToUpdate = append(valuesToUpdate, val)
+	}
+
+	var rows *sql.Rows
+	query := func(context context.Context) error {
+		rows, err = stmt.QueryContext(
+			context,
+			valuesToUpdate...,
+		)
+		return err
+	}
+	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
+	if err != nil {
+		return nil, fmt.Errorf(errorMsg, err)
+	}
+
+	defer helpers.ExecuteWithLogError(rows.Close, q.log)
+	var res []datastructs.PersonData
+	for rows.Next() {
+		data := datastructs.PersonData{}
+		err := rows.Scan(
+			&data.Id,
+			&data.Name,
+			&data.Surname,
+			&data.Patronymic,
+			&data.Age,
+			&data.Gender,
+			&data.Country,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("parse db result: %w", err)
+		}
+
+		res = append(res, data)
+	}
+
+	return res, nil
+}
+
+func createSelectPersonsStmt(ctx context.Context, tx *sql.Tx, filters map[string]interface{}, pageNum int64, pageSize int64) (*sql.Stmt, error) {
+	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
+
+	gendersJoin := fmt.Sprintf("LEFT JOIN %s ON %[1]s.id = %s.gender_id", GetTableFullName(GendersTable), GetTableFullName(PersonsTable))
+	countriesJoin := fmt.Sprintf("LEFT JOIN %s ON %[1]s.id = %s.country_id", GetTableFullName(CountriesTable), GetTableFullName(PersonsTable))
+	builder := psql.Select(
+		GetTableFullName(PersonsTable)+".id",
+		GetTableFullName(PersonsTable)+".name",
+		"surname",
+		"patronymic",
+		"age",
+		GetTableFullName(GendersTable)+".name",
+		GetTableFullName(CountriesTable)+".name",
+	).
+		From(GetTableFullName(PersonsTable)).
+		JoinClause(gendersJoin).
+		JoinClause(countriesJoin)
+	if len(filters) != 0 {
+		for key := range filters {
+			switch key {
+			case "name":
+				key = GetTableFullName(PersonsTable) + ".name"
+			case "gender":
+				key = GetTableFullName(GendersTable) + ".name"
+			case "country":
+				key = GetTableFullName(CountriesTable) + ".name"
+			}
+			builder = builder.Where(sq.Eq{key: "?"})
+		}
+	}
+	if pageSize != 0 {
+		builder = builder.Limit(uint64(pageSize))
+		if pageNum != 0 {
+			builder = builder.Offset(uint64((pageNum - 1) * pageSize))
+		}
+	}
+	psqlSelect, _, err := builder.ToSql()
+
+	if err != nil {
+		return nil, fmt.Errorf("squirrel sql select statement for '"+GetTableFullName(PersonsTable)+"': %w", err)
+	}
+	return tx.PrepareContext(ctx, psqlSelect)
 }
 
 func (q *QueriesHandler) DeletePerson(ctx context.Context, tx *sql.Tx, id int64) (int64, error) {
