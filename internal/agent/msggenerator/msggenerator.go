@@ -21,7 +21,7 @@ func Run(ctx context.Context, producer msgbroker.Producer, log logger.BaseLogger
 				return
 			default:
 				chGeneratedNames <- getRandomName()
-				time.Sleep(3 * time.Second)
+				time.Sleep(5 * time.Second)
 			}
 		}
 	}(ctx, chGeneratedNames)

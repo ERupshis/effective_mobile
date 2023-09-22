@@ -15,6 +15,7 @@ var russianFirstNamesFemale = []string{
 	"Olga",
 	"Tatiana",
 	"Irina",
+	"",
 }
 
 var russianLastNames = []string{
@@ -41,6 +42,7 @@ var russianPatronymicNamesFemale = []string{
 	"Dmitrievna",
 	"Sergeevna",
 	"Mikhailovna",
+	"",
 }
 
 var englishFirstNamesMale = []string{
@@ -58,6 +60,7 @@ var englishFirstNamesFemale = []string{
 	"Elizabeth",
 	"Susan",
 	"Patricia",
+	"",
 }
 
 var englishLastNames = []string{
@@ -66,4 +69,5 @@ var englishLastNames = []string{
 	"Brown",
 	"Davis",
 	"Wilson",
+	"",
 }

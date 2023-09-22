@@ -16,9 +16,9 @@ import (
 const packageName = "extradatactrl"
 
 var remoteServices = []string{
-	//"https://api.agify.io",
-	//"https://api.genderize.io",
-	//"https://api.nationalize.io",
+	"https://api.agify.io",
+	"https://api.genderize.io",
+	"https://api.nationalize.io",
 }
 
 type Controller struct {
@@ -102,10 +102,15 @@ func (c *Controller) doRemoteApiRequest(ctx context.Context, serviceUrl string, 
 
 	err = json.Unmarshal(body, &dataIn.Data)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:doRemoteApiRequest] JSON unmarshaling fail: %v", err)
-	}
+		countries := datastructs.Countries{}
+		err = json.Unmarshal(body, &countries)
+		if err != nil {
+			c.log.Info("["+packageName+":Controller:doRemoteApiRequest] JSON unmarshaling fail: %v", err)
+			return err
+		}
 
-	c.log.Info("["+packageName+":Controller:doRemoteApiRequest] storage save value : %v", dataIn.Data)
+		dataIn.Data.Country = countries.Data[0].Id
+	}
 
 	return nil
 }

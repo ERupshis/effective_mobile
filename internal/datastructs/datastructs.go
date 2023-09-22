@@ -40,9 +40,10 @@ type Gender struct {
 }
 
 type CountryData struct {
-	Id string `json:"country_id"`
+	Id          string  `json:"country_id"`
+	Probability float64 `json:"probability"`
 }
 
-type Nationality struct {
+type Countries struct {
 	Data []CountryData `json:"country"`
 }
