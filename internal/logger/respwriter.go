@@ -13,7 +13,7 @@ type loggingResponseWriter struct {
 }
 
 func createResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
-	return &loggingResponseWriter{w, &responseData{0, 0}}
+	return &loggingResponseWriter{w, &responseData{200, 0}}
 }
 
 func (r *loggingResponseWriter) getResponseData() *responseData {

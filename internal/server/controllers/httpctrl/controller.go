@@ -78,8 +78,6 @@ func (c *Controller) createPersonHandler(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (c *Controller) deletePersonByIdHandler(w http.ResponseWriter, r *http.Request) {
@@ -107,8 +105,6 @@ func (c *Controller) deletePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Request) {
@@ -158,8 +154,6 @@ func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (c *Controller) updatePersonByIdPartiallyHandler(w http.ResponseWriter, r *http.Request) {
@@ -210,8 +204,6 @@ func (c *Controller) updatePersonByIdPartiallyHandler(w http.ResponseWriter, r *
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
 
 func (c *Controller) getPersonsByFilterHandler(w http.ResponseWriter, r *http.Request) {
@@ -228,7 +220,7 @@ func (c *Controller) getPersonsByFilterHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	var responseBody []byte
-	if responseBody, err = json.Marshal(personsData); err != nil {
+	if responseBody, err = json.MarshalIndent(personsData, "", "\t"); err != nil {
 		c.log.Info("["+packageName+":Controller:getPersonsByFilterHandler] convert request result into JSON failed: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -236,7 +228,6 @@ func (c *Controller) getPersonsByFilterHandler(w http.ResponseWriter, r *http.Re
 
 	_, _ = w.Write(responseBody)
 	w.Header().Add("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 }
 
 func (c *Controller) badRequestHandler(w http.ResponseWriter, _ *http.Request) {

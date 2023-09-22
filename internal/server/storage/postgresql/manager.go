@@ -1,4 +1,4 @@
-package storage
+package postgresql
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/retryer"
 	"github.com/erupshis/effective_mobile/internal/server/config"
-	"github.com/erupshis/effective_mobile/internal/server/storage/postgrequeries"
+	"github.com/erupshis/effective_mobile/internal/server/storage"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -22,13 +22,13 @@ import (
 
 type postgresDB struct {
 	database *sql.DB
-	handler  postgrequeries.QueriesHandler
+	handler  QueriesHandler
 
 	log logger.BaseLogger
 	mu  sync.RWMutex
 }
 
-func CreatePostgreDB(ctx context.Context, cfg config.Config, queriesHandler postgrequeries.QueriesHandler, log logger.BaseLogger) (BaseStorageManager, error) {
+func CreatePostgreDB(ctx context.Context, cfg config.Config, queriesHandler QueriesHandler, log logger.BaseLogger) (storage.BaseStorageManager, error) {
 	log.Info("[storage:CreatePostgreDB] open database with settings: '%s'", cfg.DatabaseDSN)
 	createDatabaseError := "create db: %w"
 	database, err := sql.Open("pgx", cfg.DatabaseDSN)
@@ -69,7 +69,7 @@ func (p *postgresDB) CheckConnection(ctx context.Context) (bool, error) {
 	exec := func(context context.Context) (int64, []byte, error) {
 		return 0, []byte{}, p.database.PingContext(context)
 	}
-	_, _, err := retryer.RetryCallWithTimeout(ctx, p.log, nil, postgrequeries.DatabaseErrorsToRetry, exec)
+	_, _, err := retryer.RetryCallWithTimeout(ctx, p.log, nil, DatabaseErrorsToRetry, exec)
 	if err != nil {
 		return false, fmt.Errorf("check connection: %w", err)
 	}
@@ -91,13 +91,13 @@ func (p *postgresDB) AddPerson(ctx context.Context, data *datastructs.PersonData
 		return fmt.Errorf(errorMessage, err)
 	}
 
-	genderId, err := p.handler.GetAdditionalId(ctx, tx, data.Gender, postgrequeries.GendersTable)
+	genderId, err := p.handler.GetAdditionalId(ctx, tx, data.Gender, GendersTable)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
 		return fmt.Errorf(errorMessage, err)
 	}
 
-	countryId, err := p.handler.GetAdditionalId(ctx, tx, data.Country, postgrequeries.CountriesTable)
+	countryId, err := p.handler.GetAdditionalId(ctx, tx, data.Country, CountriesTable)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
 		return fmt.Errorf(errorMessage, err)
@@ -182,13 +182,13 @@ func (p *postgresDB) UpdatePersonById(ctx context.Context, id int64, data *datas
 		return 0, fmt.Errorf(errorMessage, err)
 	}
 
-	genderId, err := p.handler.GetAdditionalId(ctx, tx, data.Gender, postgrequeries.GendersTable)
+	genderId, err := p.handler.GetAdditionalId(ctx, tx, data.Gender, GendersTable)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
 		return 0, fmt.Errorf(errorMessage, err)
 	}
 
-	countryId, err := p.handler.GetAdditionalId(ctx, tx, data.Country, postgrequeries.CountriesTable)
+	countryId, err := p.handler.GetAdditionalId(ctx, tx, data.Country, CountriesTable)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
 		return 0, fmt.Errorf(errorMessage, err)
@@ -248,11 +248,11 @@ func (p *postgresDB) replaceRefValues(ctx context.Context, tx *sql.Tx, values ma
 	}{
 		{
 			name:  "gender",
-			table: postgrequeries.GendersTable,
+			table: GendersTable,
 		},
 		{
 			name:  "country",
-			table: postgrequeries.CountriesTable,
+			table: CountriesTable,
 		},
 	}
 

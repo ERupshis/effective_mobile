@@ -21,14 +21,12 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 
 	attempt := 0
 	for _, interval := range intervals {
-		ctxWithTime, cancel := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
+		//goland:noinspection ALL
+		ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
 		status, body, err = callback(ctxWithTime)
 		if err == nil {
-			cancel()
 			return status, body, nil
 		}
-
-		<-ctxWithTime.Done()
 
 		attempt++
 		if log != nil {
@@ -36,10 +34,8 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 		}
 
 		if !canRetryCall(err, repeatableErrors) {
-			cancel()
 			break
 		}
-		cancel()
 	}
 
 	return status, body, err
@@ -53,31 +49,36 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 		intervals = defIntervals
 	}
 
-	attempt := 0
+	attemptNum := 0
 	for _, interval := range intervals {
-		ctxWithTime, cancel := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
-		err = callback(ctxWithTime)
+		err = callFunc(ctx, interval, callback)
 		if err == nil {
-			cancel()
 			return nil
 		}
 
-		<-ctxWithTime.Done()
-
-		attempt++
+		attemptNum++
 		if log != nil {
-			log.Info("attempt '%d' to postJSON failed with error: %v", attempt, err)
+			log.Info("attemptNum '%d' to postJSON failed with error: %v", attemptNum, err)
 		}
 
 		if !canRetryCall(err, repeatableErrors) {
 			log.Info("this kind of error is not retriable: %w", err)
-			cancel()
 			break
 		}
-		cancel()
 	}
 
 	return err
+}
+
+func callFunc(ctx context.Context, interval int, callback func(context.Context) error) error {
+	//goland:noinspection ALL
+	ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
+	err := callback(ctxWithTime)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func canRetryCall(err error, repeatableErrors []error) bool {
