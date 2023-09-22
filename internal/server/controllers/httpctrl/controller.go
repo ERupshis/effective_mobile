@@ -210,9 +210,26 @@ func (c *Controller) getPersonsByFilterHandler(w http.ResponseWriter, r *http.Re
 	values := r.URL.Query()
 	valuesToFilter, _ := httphelper.ParseQueryValuesIntoMap(values)
 
-	page, pageSize := httphelper.ParsePageAndPageSize(values)
+	pageNum, pageSize := httphelper.ParsePageAndPageSize(values)
+	if pageSize < 0 {
+		c.log.Info("[" + packageName + ":Controller:getPersonsByFilterHandler] negative page size")
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
 
-	personsData, err := c.strg.GetPersons(r.Context(), valuesToFilter, page, pageSize)
+	if pageNum < 0 {
+		c.log.Info("[" + packageName + ":Controller:getPersonsByFilterHandler] negative page num")
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	if len(values) != 0 {
+		c.log.Info("["+packageName+":Controller:getPersonsByFilterHandler] unknown keys in request: %v", values)
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	personsData, err := c.strg.GetPersons(r.Context(), valuesToFilter, pageNum, pageSize)
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:getPersonsByFilterHandler] cannot process: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)

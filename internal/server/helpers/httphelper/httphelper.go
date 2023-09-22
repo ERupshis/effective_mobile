@@ -25,6 +25,7 @@ func ParseQueryValuesIntoMap(values url.Values) (map[string]interface{}, error) 
 	for _, fieldName := range FieldsInPersonData {
 		if values.Has(fieldName) {
 			res[fieldName] = values.Get(fieldName)
+			values.Del(fieldName)
 		}
 	}
 
@@ -52,6 +53,9 @@ func ParsePageAndPageSize(values url.Values) (int64, int64) {
 
 	page, _ := strconv.Atoi(rawPage)
 	pageSize, _ := strconv.Atoi(rawPageSize)
+
+	values.Del("page_num")
+	values.Del("page_size")
 
 	return int64(page), int64(pageSize)
 }
