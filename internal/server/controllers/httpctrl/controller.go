@@ -10,18 +10,18 @@ import (
 	"github.com/erupshis/effective_mobile/internal/helpers"
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/server/helpers/requestshelper"
-	"github.com/erupshis/effective_mobile/internal/server/storage"
+	"github.com/erupshis/effective_mobile/internal/server/storage/managers"
 	"github.com/go-chi/chi/v5"
 )
 
 const packageName = "httpctrl"
 
 type Controller struct {
-	strg storage.BaseStorageManager
+	strg managers.BaseStorageManager
 	log  logger.BaseLogger
 }
 
-func Create(strg storage.BaseStorageManager, log logger.BaseLogger) *Controller {
+func Create(strg managers.BaseStorageManager, log logger.BaseLogger) *Controller {
 	return &Controller{
 		strg: strg,
 		log:  log,

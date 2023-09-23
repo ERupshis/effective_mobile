@@ -6,7 +6,6 @@ import (
 
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 	"github.com/erupshis/effective_mobile/internal/logger"
-	"github.com/erupshis/effective_mobile/internal/server/helpers/requestshelper"
 	"github.com/erupshis/effective_mobile/internal/server/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/graphql-go/graphql"
@@ -18,13 +17,11 @@ const packageName = "graphqlctrl"
 var personType = getPersonType()
 
 type Controller struct {
-	persons []datastructs.PersonData
-
-	strg storage.BaseStorageManager
+	strg storage.Storage
 	log  logger.BaseLogger
 }
 
-func Create(strg storage.BaseStorageManager, log logger.BaseLogger) *Controller {
+func Create(strg storage.Storage, log logger.BaseLogger) *Controller {
 	return &Controller{
 		strg: strg,
 		log:  log,
@@ -104,21 +101,21 @@ func (c *Controller) readPersonsQuery() *graphql.Field {
 func (c *Controller) readPersonsResolver(p graphql.ResolveParams) (interface{}, error) {
 	// Retrieve persons based on optional filter arguments
 	//TODO: extend.
-	name, _ := p.Args[argName].(string)
-	surname, _ := p.Args[argSurname].(string)
-	age, _ := p.Args[argAge].(int64)
-	gender, _ := p.Args[argGender].(string)
+	//name, _ := p.Args[argName].(string)
+	//surname, _ := p.Args[argSurname].(string)
+	//age, _ := p.Args[argAge].(int64)
+	//gender, _ := p.Args[argGender].(string)
 
 	var filteredPersons = []datastructs.PersonData{}
-	for _, person := range c.persons {
-		// Check if each argument matches the person's data
-		if (name == "" || person.Name == name) &&
-			(surname == "" || person.Surname == surname) &&
-			(age == 0 || person.Age == age) &&
-			(gender == "" || person.Gender == gender) {
-			filteredPersons = append(filteredPersons, person)
-		}
-	}
+	//for _, person := range c.persons {
+	//	// Check if each argument matches the person's data
+	//	if (name == "" || person.Name == name) &&
+	//		(surname == "" || person.Surname == surname) &&
+	//		(age == 0 || person.Age == age) &&
+	//		(gender == "" || person.Gender == gender) {
+	//		filteredPersons = append(filteredPersons, person)
+	//	}
+	//}
 	return filteredPersons, nil
 }
 
@@ -154,20 +151,14 @@ func (c *Controller) createPersonResolver(p graphql.ResolveParams) (interface{},
 		Country:    country,
 	}
 
-	_, err := requestshelper.IsPersonDataValid(&newPerson, true)
-	if err != nil {
-		c.log.Info("["+packageName+":Controller:createPersonResolver] data validation failed: %v", err)
-		return newPerson, fmt.Errorf("resolve create person:%w", err)
-	}
-
 	newPersonId, err := c.strg.AddPerson(p.Context, &newPerson)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:createPersonResolver] cannot process: %v", err)
-		return newPerson, fmt.Errorf("resolve create person: %w", err)
+		c.log.Info("["+packageName+":Controller:createPersonResolver] create person failed: %w", err)
+		return nil, fmt.Errorf("create person failed: %w", err)
 	}
 
-	c.log.Info("["+packageName+":Controller:createPersonResolver] person successfully added with id '%d'", newPersonId)
 	newPerson.Id = newPersonId
+	c.log.Info("["+packageName+":Controller:createPersonResolver] person with id '%d' successfully created", newPersonId)
 	return newPerson, nil
 }
 
@@ -189,30 +180,30 @@ func (c *Controller) updatePersonMutation() *graphql.Field {
 
 func (c *Controller) updatePersonResolver(p graphql.ResolveParams) (interface{}, error) {
 	//TODO: need to support partial update.
-	id, _ := p.Args["argId"].(int64)
-	for i, person := range c.persons {
-		if person.Id == id {
-			if name, ok := p.Args[argName].(string); ok {
-				c.persons[i].Name = name
-			}
-			if surname, ok := p.Args[argSurname].(string); ok {
-				c.persons[i].Surname = surname
-			}
-			if patronymic, ok := p.Args[argPatronymic].(string); ok {
-				c.persons[i].Patronymic = patronymic
-			}
-			if age, ok := p.Args[argAge].(int64); ok {
-				c.persons[i].Age = age
-			}
-			if gender, ok := p.Args[argGender].(string); ok {
-				c.persons[i].Gender = gender
-			}
-			if country, ok := p.Args[argCountry].(string); ok {
-				c.persons[i].Country = country
-			}
-			return c.persons[i], nil
-		}
-	}
+	//id, _ := p.Args["argId"].(int64)
+	//for i, person := range c.persons {
+	//	if person.Id == id {
+	//		if name, ok := p.Args[argName].(string); ok {
+	//			c.persons[i].Name = name
+	//		}
+	//		if surname, ok := p.Args[argSurname].(string); ok {
+	//			c.persons[i].Surname = surname
+	//		}
+	//		if patronymic, ok := p.Args[argPatronymic].(string); ok {
+	//			c.persons[i].Patronymic = patronymic
+	//		}
+	//		if age, ok := p.Args[argAge].(int64); ok {
+	//			c.persons[i].Age = age
+	//		}
+	//		if gender, ok := p.Args[argGender].(string); ok {
+	//			c.persons[i].Gender = gender
+	//		}
+	//		if country, ok := p.Args[argCountry].(string); ok {
+	//			c.persons[i].Country = country
+	//		}
+	//		return c.persons[i], nil
+	//	}
+	//}
 	return nil, nil
 }
 
@@ -227,26 +218,13 @@ func (c *Controller) deletePersonMutation() *graphql.Field {
 }
 
 func (c *Controller) deletePersonResolver(p graphql.ResolveParams) (interface{}, error) {
-	// Delete a person by ID
 	id, _ := p.Args[argId].(int)
-
-	personToDelete, err := c.strg.GetPersons(p.Context, map[string]interface{}{"id": id}, 0, 0)
+	deletedPerson, err := c.strg.DeletePersonById(p.Context, int64(id))
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:deletePersonByIdHandler] person was not found in storage by id '%s': %v", id, err)
+		c.log.Info("["+packageName+":Controller:deletePersonResolver] delete person failed: %v", err)
 		return nil, fmt.Errorf("delete person failed: %w", err)
-	}
-
-	affectedCount, err := c.strg.DeletePersonById(p.Context, int64(id))
-	if err != nil {
-		c.log.Info("["+packageName+":Controller:deletePersonByIdHandler] person id is not valid: %v", err)
-		return nil, fmt.Errorf("delete person failed: %w", err)
-	}
-
-	if affectedCount == 0 {
-		c.log.Info("["+packageName+":Controller:deletePersonResolver] request has no effect with id '%d'", id)
-		return nil, fmt.Errorf("person with id '%d' was not found", id)
 	}
 
 	c.log.Info("["+packageName+":Controller:deletePersonResolver] person with id '%d' successfully deleted", id)
-	return personToDelete[0], nil
+	return deletedPerson, nil
 }

@@ -18,7 +18,8 @@ import (
 	"github.com/erupshis/effective_mobile/internal/server/controllers/msgbrokerctrl"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/msgsavectrl"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/qraphqlctrl"
-	"github.com/erupshis/effective_mobile/internal/server/storage/postgresql"
+	"github.com/erupshis/effective_mobile/internal/server/storage"
+	"github.com/erupshis/effective_mobile/internal/server/storage/managers/postgresql"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -65,16 +66,16 @@ func main() {
 
 	//storage.
 	queriesHandler := postgresql.CreateHandler(log)
-	strg, err := postgresql.CreatePostgreDB(ctxWithCancel, cfg, queriesHandler, log)
+	storageManager, err := postgresql.CreatePostgreDB(ctxWithCancel, cfg, queriesHandler, log)
 	if err != nil {
 		log.Info("failed to connect to storage: %v", err)
 		return
 	}
-	defer helpers.ExecuteWithLogError(strg.Close, log)
+	defer helpers.ExecuteWithLogError(storageManager.Close, log)
 
 	//save messages controller.
 	chErrorsSaveCtrl := make(chan msgbroker.Message, 10)
-	saveController := msgsavectrl.Create(chFullPersonData, chErrorsSaveCtrl, strg, log)
+	saveController := msgsavectrl.Create(chFullPersonData, chErrorsSaveCtrl, storageManager, log)
 	go saveController.Run(ctxWithCancel)
 
 	//errors controller.
@@ -82,10 +83,11 @@ func main() {
 	go errorsController.Run(ctxWithCancel)
 
 	//http controller.
-	httpController := httpctrl.Create(strg, log)
+	httpController := httpctrl.Create(storageManager, log)
 
 	//graphQL controller.
-	graphqlController := qraphqlctrl.Create(strg, log)
+	storage := storage.Create(storageManager, log)
+	graphqlController := qraphqlctrl.Create(storage, log)
 
 	//rest routing.
 	router := chi.NewRouter()

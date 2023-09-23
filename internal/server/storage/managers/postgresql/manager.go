@@ -13,7 +13,7 @@ import (
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/retryer"
 	"github.com/erupshis/effective_mobile/internal/server/config"
-	"github.com/erupshis/effective_mobile/internal/server/storage"
+	"github.com/erupshis/effective_mobile/internal/server/storage/managers"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -28,7 +28,7 @@ type postgresDB struct {
 	mu  sync.RWMutex
 }
 
-func CreatePostgreDB(ctx context.Context, cfg config.Config, queriesHandler QueriesHandler, log logger.BaseLogger) (storage.BaseStorageManager, error) {
+func CreatePostgreDB(ctx context.Context, cfg config.Config, queriesHandler QueriesHandler, log logger.BaseLogger) (managers.BaseStorageManager, error) {
 	log.Info("[storage:CreatePostgreDB] open database with settings: '%s'", cfg.DatabaseDSN)
 	createDatabaseError := "create db: %w"
 	database, err := sql.Open("pgx", cfg.DatabaseDSN)
