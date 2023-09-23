@@ -137,7 +137,6 @@ func (c *Controller) createPersonMutation() *graphql.Field {
 }
 
 func (c *Controller) createPersonResolver(p graphql.ResolveParams) (interface{}, error) {
-	// Create a new person
 	name, _ := p.Args[argName].(string)
 	surname, _ := p.Args[argSurname].(string)
 	patronymic, _ := p.Args[argPatronymic].(string)
@@ -146,7 +145,6 @@ func (c *Controller) createPersonResolver(p graphql.ResolveParams) (interface{},
 	country, _ := p.Args[argCountry].(string)
 
 	newPerson := datastructs.PersonData{
-		Id:         int64(len(c.persons) + 1), //TODO: remove.
 		Name:       name,
 		Surname:    surname,
 		Patronymic: patronymic,
@@ -155,7 +153,12 @@ func (c *Controller) createPersonResolver(p graphql.ResolveParams) (interface{},
 		Country:    country,
 	}
 
-	c.persons = append(c.persons, newPerson)
+	newPersonId, err := c.strg.AddPerson(p.Context, &newPerson)
+	if err != nil {
+		return newPerson, fmt.Errorf("resolve create person: %w", err)
+	}
+
+	newPerson.Id = newPersonId
 	return newPerson, nil
 }
 

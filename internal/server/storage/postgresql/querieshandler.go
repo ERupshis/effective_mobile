@@ -46,17 +46,18 @@ func CreateHandler(log logger.BaseLogger) QueriesHandler {
 	return QueriesHandler{log: log}
 }
 
-func (q *QueriesHandler) InsertPerson(ctx context.Context, tx *sql.Tx, personData *datastructs.PersonData, genderId int64, countryId int64) error {
+func (q *QueriesHandler) InsertPerson(ctx context.Context, tx *sql.Tx, personData *datastructs.PersonData, genderId int64, countryId int64) (int64, error) {
 	errorMsg := fmt.Sprintf("insert person '%v' in '%s'", personData, PersonsTable) + ": %w"
 
 	stmt, err := createInsertPersonStmt(ctx, tx)
 	if err != nil {
-		return fmt.Errorf(errorMsg, err)
+		return -1, fmt.Errorf(errorMsg, err)
 	}
 	defer helpers.ExecuteWithLogError(stmt.Close, q.log)
 
+	newPersonId := int64(0)
 	query := func(context context.Context) error {
-		_, err = stmt.ExecContext(
+		err := stmt.QueryRowContext(
 			context,
 			personData.Name,
 			personData.Surname,
@@ -64,15 +65,15 @@ func (q *QueriesHandler) InsertPerson(ctx context.Context, tx *sql.Tx, personDat
 			personData.Age,
 			genderId,
 			countryId,
-		)
+		).Scan(&newPersonId)
 		return err
 	}
 	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
 	if err != nil {
-		return fmt.Errorf(errorMsg, err)
+		return -1, fmt.Errorf(errorMsg, err)
 	}
 
-	return nil
+	return newPersonId, nil
 }
 
 func createInsertPersonStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) {
@@ -86,7 +87,7 @@ func createInsertPersonStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) 
 	if err != nil {
 		return nil, fmt.Errorf("squirrel sql insert statement for '"+GetTableFullName(PersonsTable)+"': %w", err)
 	}
-	return tx.PrepareContext(ctx, psqlInsert)
+	return tx.PrepareContext(ctx, psqlInsert+"RETURNING id")
 }
 
 func (q *QueriesHandler) SelectPersons(ctx context.Context, tx *sql.Tx, filters map[string]interface{}, pageNum int64, pageSize int64) ([]datastructs.PersonData, error) {

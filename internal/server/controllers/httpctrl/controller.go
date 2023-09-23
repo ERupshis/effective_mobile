@@ -3,6 +3,7 @@ package httpctrl
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -72,12 +73,17 @@ func (c *Controller) createPersonHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = c.strg.AddPerson(r.Context(), personData)
+	newPersonId, err := c.strg.AddPerson(r.Context(), personData)
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:createPersonHandler] cannot process: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	responseBody := []byte(fmt.Sprintf("Added with id: %d", newPersonId))
+	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
+	w.Header().Add("Content-Type", "text/plain")
+	_, _ = w.Write(responseBody)
 }
 
 func (c *Controller) deletePersonByIdHandler(w http.ResponseWriter, r *http.Request) {
@@ -105,6 +111,11 @@ func (c *Controller) deletePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
+
+	responseBody := []byte("successfully deleted")
+	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
+	w.Header().Add("Content-Type", "text/plain")
+	_, _ = w.Write(responseBody)
 }
 
 func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Request) {
@@ -154,6 +165,11 @@ func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
+
+	responseBody := []byte("fully updated")
+	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
+	w.Header().Add("Content-Type", "text/plain")
+	_, _ = w.Write(responseBody)
 }
 
 func (c *Controller) updatePersonByIdPartiallyHandler(w http.ResponseWriter, r *http.Request) {
@@ -204,6 +220,11 @@ func (c *Controller) updatePersonByIdPartiallyHandler(w http.ResponseWriter, r *
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
+
+	responseBody := []byte("partially updated")
+	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
+	w.Header().Add("Content-Type", "text/plain")
+	_, _ = w.Write(responseBody)
 }
 
 func (c *Controller) getPersonsByFilterHandler(w http.ResponseWriter, r *http.Request) {

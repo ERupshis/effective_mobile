@@ -80,7 +80,7 @@ func (p *postgresDB) Close() error {
 	return p.database.Close()
 }
 
-func (p *postgresDB) AddPerson(ctx context.Context, data *datastructs.PersonData) error {
+func (p *postgresDB) AddPerson(ctx context.Context, data *datastructs.PersonData) (int64, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -88,34 +88,34 @@ func (p *postgresDB) AddPerson(ctx context.Context, data *datastructs.PersonData
 	errorMessage := "add person in db: %w"
 	tx, err := p.database.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf(errorMessage, err)
+		return -1, fmt.Errorf(errorMessage, err)
 	}
 
 	genderId, err := p.handler.GetAdditionalId(ctx, tx, data.Gender, GendersTable)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return fmt.Errorf(errorMessage, err)
+		return -1, fmt.Errorf(errorMessage, err)
 	}
 
 	countryId, err := p.handler.GetAdditionalId(ctx, tx, data.Country, CountriesTable)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return fmt.Errorf(errorMessage, err)
+		return -1, fmt.Errorf(errorMessage, err)
 	}
 
-	err = p.handler.InsertPerson(ctx, tx, data, genderId, countryId)
+	newPersonId, err := p.handler.InsertPerson(ctx, tx, data, genderId, countryId)
 	if err != nil {
 		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return fmt.Errorf(errorMessage, err)
+		return -1, fmt.Errorf(errorMessage, err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return fmt.Errorf(errorMessage, err)
+		return -1, fmt.Errorf(errorMessage, err)
 	}
 
 	p.log.Info("[postgresDB:AddPerson] transaction successful")
-	return nil
+	return newPersonId, nil
 }
 
 func (p *postgresDB) GetPersons(ctx context.Context, filters map[string]interface{}, pageNum int64, pageSize int64) ([]datastructs.PersonData, error) {

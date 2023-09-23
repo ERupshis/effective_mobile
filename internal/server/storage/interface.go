@@ -7,7 +7,7 @@ import (
 )
 
 type BaseStorageManager interface {
-	AddPerson(ctx context.Context, data *datastructs.PersonData) error
+	AddPerson(ctx context.Context, data *datastructs.PersonData) (int64, error)
 	GetPersons(ctx context.Context, filters map[string]interface{}, pageNum int64, pageSize int64) ([]datastructs.PersonData, error)
 	DeletePersonById(ctx context.Context, personId int64) (int64, error)
 	UpdatePersonById(ctx context.Context, personId int64, data *datastructs.PersonData) (int64, error)
