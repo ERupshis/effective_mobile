@@ -9,7 +9,7 @@ import (
 
 	"github.com/erupshis/effective_mobile/internal/helpers"
 	"github.com/erupshis/effective_mobile/internal/logger"
-	"github.com/erupshis/effective_mobile/internal/server/helpers/httphelper"
+	"github.com/erupshis/effective_mobile/internal/server/helpers/requestshelper"
 	"github.com/erupshis/effective_mobile/internal/server/storage"
 	"github.com/go-chi/chi/v5"
 )
@@ -59,14 +59,14 @@ func (c *Controller) createPersonHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	personData, err := httphelper.ParsePersonDataFromJSON(buf.Bytes())
+	personData, err := requestshelper.ParsePersonDataFromJSON(buf.Bytes())
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:createPersonHandler] failed to parse query params: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	_, err = httphelper.IsPersonDataValid(personData, true)
+	_, err = requestshelper.IsPersonDataValid(personData, true)
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:createPersonHandler] data validation: %v", err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -139,14 +139,14 @@ func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 	}
 	defer helpers.ExecuteWithLogError(r.Body.Close, c.log)
 
-	personData, err := httphelper.ParsePersonDataFromJSON(buf.Bytes())
+	personData, err := requestshelper.ParsePersonDataFromJSON(buf.Bytes())
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] failed to parse query params: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	_, err = httphelper.IsPersonDataValid(personData, true)
+	_, err = requestshelper.IsPersonDataValid(personData, true)
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] data validation: %v", err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -201,7 +201,7 @@ func (c *Controller) updatePersonByIdPartiallyHandler(w http.ResponseWriter, r *
 		return
 	}
 
-	valuesToUpdate = httphelper.FilterValues(valuesToUpdate)
+	valuesToUpdate = requestshelper.FilterValues(valuesToUpdate)
 	if len(valuesToUpdate) == 0 {
 		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] missing values to update in request '%v'", buf.Bytes())
 		w.WriteHeader(http.StatusNotModified)
@@ -229,9 +229,9 @@ func (c *Controller) updatePersonByIdPartiallyHandler(w http.ResponseWriter, r *
 
 func (c *Controller) getPersonsByFilterHandler(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
-	valuesToFilter, _ := httphelper.ParseQueryValuesIntoMap(values)
+	valuesToFilter, _ := requestshelper.ParseQueryValuesIntoMap(values)
 
-	pageNum, pageSize := httphelper.ParsePageAndPageSize(values)
+	pageNum, pageSize := requestshelper.ParsePageAndPageSize(values)
 	if pageSize < 0 {
 		c.log.Info("[" + packageName + ":Controller:getPersonsByFilterHandler] negative page size")
 		w.WriteHeader(http.StatusUnprocessableEntity)

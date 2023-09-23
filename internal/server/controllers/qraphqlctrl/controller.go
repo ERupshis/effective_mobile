@@ -6,6 +6,7 @@ import (
 
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 	"github.com/erupshis/effective_mobile/internal/logger"
+	"github.com/erupshis/effective_mobile/internal/server/helpers/requestshelper"
 	"github.com/erupshis/effective_mobile/internal/server/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/graphql-go/graphql"
@@ -151,6 +152,11 @@ func (c *Controller) createPersonResolver(p graphql.ResolveParams) (interface{},
 		Age:        int64(age),
 		Gender:     gender,
 		Country:    country,
+	}
+
+	_, err := requestshelper.IsPersonDataValid(&newPerson, true)
+	if err != nil {
+		return newPerson, fmt.Errorf("resolve create person:%w", err)
 	}
 
 	newPersonId, err := c.strg.AddPerson(p.Context, &newPerson)
