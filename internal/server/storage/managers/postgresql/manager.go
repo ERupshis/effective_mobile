@@ -145,6 +145,7 @@ func (p *postgresDB) SelectPersons(ctx context.Context, filters map[string]inter
 }
 
 func (p *postgresDB) DeletePersonById(ctx context.Context, personId int64) (int64, error) {
+	//TODO: avoid real deletion from DB. Need to add new attr 'isDeleted' and mark on deleted elements.
 	p.mu.Lock()
 	defer p.mu.Unlock()
 

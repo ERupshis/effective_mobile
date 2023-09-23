@@ -9,7 +9,7 @@ import (
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 )
 
-var FieldsInPersonData = []string{"name", "surname", "patronymic", "age", "gender", "country"}
+var FieldsInPersonData = []string{"id", "name", "surname", "patronymic", "age", "gender", "country", "page_num", "page_size"}
 
 func ParsePersonDataFromJSON(rawData []byte) (*datastructs.PersonData, error) {
 	personData := &datastructs.PersonData{}
@@ -30,8 +30,8 @@ func ParseQueryValuesIntoMap(values url.Values) (map[string]interface{}, error) 
 	}
 
 	var err error
-	if len(res) == 0 {
-		err = fmt.Errorf("missing any siutable query value")
+	if len(res) == 0 && len(values) != 0 {
+		err = fmt.Errorf("query contains only incorrect keys")
 	}
 
 	return res, err
@@ -47,32 +47,40 @@ func FilterValues(values map[string]interface{}) map[string]interface{} {
 	return res
 }
 
-func FilterPageNumAndPageSize(values map[string]interface{}) (int64, int64) {
+func FilterPageNumAndPageSize(values map[string]interface{}) (map[string]interface{}, int64, int64) {
 	var pageNum int64
 	var pageSize int64
 
 	if val, ok := values["page_num"]; ok {
-		pageNum = int64(val.(int))
+		pageNum = convertQueryValueIntoInt64(val)
+		delete(values, "page_num")
 	}
 
 	if val, ok := values["page_size"]; ok {
-		pageSize = int64(val.(int))
+		pageSize = convertQueryValueIntoInt64(val)
+		delete(values, "page_size")
 	}
 
-	return pageNum, pageSize
+	return values, pageNum, pageSize
 }
 
-func ParsePageAndPageSize(values url.Values) (int64, int64) {
-	rawPage := values.Get("page_num")
-	rawPageSize := values.Get("page_size")
+func convertQueryValueIntoInt64(value interface{}) int64 {
+	var res int64
+	switch param := value.(type) {
+	case string:
+		intVal, err := strconv.Atoi(param)
+		if err != nil {
+			res = 0
+		} else {
+			res = int64(intVal)
+		}
+	case int:
+		res = int64(param)
+	default:
+		res = 0
+	}
 
-	page, _ := strconv.Atoi(rawPage)
-	pageSize, _ := strconv.Atoi(rawPageSize)
-
-	values.Del("page_num")
-	values.Del("page_size")
-
-	return int64(page), int64(pageSize)
+	return res
 }
 
 func IsPersonDataValid(data *datastructs.PersonData, allFieldsToCheck bool) (bool, error) {

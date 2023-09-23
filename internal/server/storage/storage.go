@@ -38,12 +38,13 @@ func (s *Storage) AddPerson(ctx context.Context, newPerson *datastructs.PersonDa
 }
 
 func (s *Storage) SelectPersons(ctx context.Context, values map[string]interface{}) ([]datastructs.PersonData, error) {
-	filters := requestshelper.FilterValues(values) //TODO: need to update filtering func.
+	filters := requestshelper.FilterValues(values)
+
 	if _, ok := values["id"]; ok {
 		filters["id"] = values["id"]
 	}
 
-	pageNum, pageSize := requestshelper.FilterPageNumAndPageSize(values)
+	filters, pageNum, pageSize := requestshelper.FilterPageNumAndPageSize(filters)
 	if pageSize < 0 {
 		return nil, fmt.Errorf("storage: get: negative page size")
 	}

@@ -72,11 +72,11 @@ func main() {
 		return
 	}
 	defer helpers.ExecuteWithLogError(storageManager.Close, log)
-	strg := storage.Create(storageManager, log)
+	mainStorage := storage.Create(storageManager, log)
 
 	//save messages controller.
 	chErrorsSaveCtrl := make(chan msgbroker.Message, 10)
-	saveController := msgsavectrl.Create(chFullPersonData, chErrorsSaveCtrl, strg, log)
+	saveController := msgsavectrl.Create(chFullPersonData, chErrorsSaveCtrl, mainStorage, log)
 	go saveController.Run(ctxWithCancel)
 
 	//errors controller.
@@ -84,10 +84,10 @@ func main() {
 	go errorsController.Run(ctxWithCancel)
 
 	//http controller.
-	httpController := httpctrl.Create(storageManager, log)
+	httpController := httpctrl.Create(mainStorage, log)
 
 	//graphQL controller.
-	graphqlController := qraphqlctrl.Create(strg, log)
+	graphqlController := qraphqlctrl.Create(mainStorage, log)
 
 	//rest routing.
 	router := chi.NewRouter()
