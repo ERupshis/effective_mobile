@@ -6,7 +6,7 @@ import (
 
 //go:generate easyjson -all datastructs.go
 type PersonData struct {
-	Id         string `json:"id"`
+	Id         int64  `json:"id"`
 	Name       string `json:"name"`
 	Surname    string `json:"surname"`
 	Patronymic string `json:"patronymic,omitempty"`

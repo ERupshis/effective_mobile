@@ -17,6 +17,7 @@ import (
 	"github.com/erupshis/effective_mobile/internal/server/controllers/httpctrl"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/msgbrokerctrl"
 	"github.com/erupshis/effective_mobile/internal/server/controllers/msgsavectrl"
+	"github.com/erupshis/effective_mobile/internal/server/controllers/qraphqlctrl"
 	"github.com/erupshis/effective_mobile/internal/server/storage/postgresql"
 	"github.com/go-chi/chi/v5"
 )
@@ -80,11 +81,16 @@ func main() {
 	errorsController := errorsctrl.Create([]<-chan msgbroker.Message{chErrorsBrokerCtrl, chErrorsExtraCtrl, chErrorsSaveCtrl}, chMessageErrors, log)
 	go errorsController.Run(ctxWithCancel)
 
+	//http controller.
 	httpController := httpctrl.Create(strg, log)
+
+	//graphQL controller.
+	graphqlController := qraphqlctrl.Create(strg, log)
 
 	//rest routing.
 	router := chi.NewRouter()
 	router.Mount("/", httpController.Route())
+	router.Mount("/graphql", graphqlController.Route())
 	log.Info("server started with Host setting: %s", cfg.Host)
 	if err := http.ListenAndServe(cfg.Host, router); err != nil {
 		log.Info("server refused to start with error: %v", err)
