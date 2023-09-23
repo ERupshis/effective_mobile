@@ -254,7 +254,7 @@ func (c *Controller) getPersonsByFilterHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	personsData, err := c.strg.GetPersons(r.Context(), valuesToFilter, pageNum, pageSize)
+	personsData, err := c.strg.SelectPersons(r.Context(), valuesToFilter, pageNum, pageSize)
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:getPersonsByFilterHandler] cannot process: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)

@@ -12,8 +12,11 @@ const (
 	argAge        = "age"
 	argGender     = "gender"
 	argCountry    = "country"
+	argPageNum    = "page_num"
+	argPageSize   = "page_size"
 )
 
+// commonConfigs map of predefined GraphQL's arguments.
 var commonConfigs = map[string]*graphql.ArgumentConfig{
 	argId: {
 		Type: graphql.Int,
@@ -36,8 +39,15 @@ var commonConfigs = map[string]*graphql.ArgumentConfig{
 	argCountry: {
 		Type: graphql.String,
 	},
+	argPageNum: {
+		Type: graphql.Int,
+	},
+	argPageSize: {
+		Type: graphql.Int,
+	},
 }
 
+// getFieldConfigArgument provides GraphQL's arguments with predefined type by name.
 func getFieldConfigArgument(fields []string) graphql.FieldConfigArgument {
 	res := graphql.FieldConfigArgument{}
 

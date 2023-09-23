@@ -118,11 +118,11 @@ func (p *postgresDB) AddPerson(ctx context.Context, data *datastructs.PersonData
 	return newPersonId, nil
 }
 
-func (p *postgresDB) GetPersons(ctx context.Context, filters map[string]interface{}, pageNum int64, pageSize int64) ([]datastructs.PersonData, error) {
+func (p *postgresDB) SelectPersons(ctx context.Context, filters map[string]interface{}, pageNum int64, pageSize int64) ([]datastructs.PersonData, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	p.log.Info("[postgresDB:GetPersons] start transaction")
+	p.log.Info("[postgresDB:SelectPersons] start transaction")
 	errorMessage := "select persons in db: %w"
 	tx, err := p.database.BeginTx(ctx, nil)
 	if err != nil {
@@ -140,7 +140,7 @@ func (p *postgresDB) GetPersons(ctx context.Context, filters map[string]interfac
 		return []datastructs.PersonData{}, fmt.Errorf(errorMessage, err)
 	}
 
-	p.log.Info("[postgresDB:GetPersons] transaction successful")
+	p.log.Info("[postgresDB:SelectPersons] transaction successful")
 	return persons, nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"github.com/graphql-go/graphql"
 )
 
+// getPersonType generates Person Object.
 func getPersonType() *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "Person",

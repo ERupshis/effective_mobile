@@ -1,3 +1,4 @@
+// Package qraphqlctrl provides GraphQL handling.
 package qraphqlctrl
 
 import (
@@ -21,6 +22,7 @@ type Controller struct {
 	log  logger.BaseLogger
 }
 
+// Create returns controller.
 func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller {
 	return &Controller{
 		strg: strg,
@@ -28,12 +30,13 @@ func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller {
 	}
 }
 
+// Route generates routing for controller.
 func (c *Controller) Route() *chi.Mux {
 	r := chi.NewRouter()
 	graphHandler, err := c.createHandler()
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:Route] failed to create route: %v", err)
-		r.HandleFunc("/", c.InternalErrorHandler)
+		r.HandleFunc("/", c.internalErrorHandler)
 		return r
 	}
 
@@ -41,10 +44,12 @@ func (c *Controller) Route() *chi.Mux {
 	return r
 }
 
-func (c *Controller) InternalErrorHandler(w http.ResponseWriter, _ *http.Request) {
+// internalErrorHandler plug if handler was not created properly.
+func (c *Controller) internalErrorHandler(w http.ResponseWriter, _ *http.Request) {
 	http.Error(w, "graphql currently unavailable", http.StatusInternalServerError)
 }
 
+// createHandler creates graph's handler.
 func (c *Controller) createHandler() (*handler.Handler, error) {
 	schema, err := c.createSchema()
 	if err != nil {
@@ -58,6 +63,7 @@ func (c *Controller) createHandler() (*handler.Handler, error) {
 	}), nil
 }
 
+// createSchema creates graph's schema.
 func (c *Controller) createSchema() (graphql.Schema, error) {
 	return graphql.NewSchema(graphql.SchemaConfig{
 		Query:    c.createQueries(),
@@ -65,61 +71,66 @@ func (c *Controller) createSchema() (graphql.Schema, error) {
 	})
 }
 
+// createQueries creates Object with Select queries.
 func (c *Controller) createQueries() *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "RootQuery",
 		Fields: graphql.Fields{
-			"persons": c.readPersonsQuery(),
+			"selectPersons": c.selectPersonsQuery(),
 		},
 	})
 }
 
+// createMutations creates Object with mutable queries.
 func (c *Controller) createMutations() *graphql.Object {
 	return graphql.NewObject(graphql.ObjectConfig{
 		Name: "Mutation",
 		Fields: graphql.Fields{
-			"createPerson": c.createPersonMutation(),
+			"insertPerson": c.insertPersonMutation(),
 			"updatePerson": c.updatePersonMutation(),
 			"deletePerson": c.deletePersonMutation(),
 		},
 	})
 }
 
-func (c *Controller) readPersonsQuery() *graphql.Field {
+// selectPersonsQuery filter persons.
+// filters: id(int), name(string), surname(string), patronymic(string),
+// age(int), gender(string), country(string), page_num(int), page_size(int).
+func (c *Controller) selectPersonsQuery() *graphql.Field {
 	return &graphql.Field{
 		Type: graphql.NewList(personType),
 		Args: getFieldConfigArgument([]string{
+			argId,
 			argName,
 			argSurname,
+			argPatronymic,
 			argAge,
 			argGender,
+			argCountry,
+			argPageNum,
+			argPageSize,
 		}),
-		Resolve: c.readPersonsResolver,
+		Resolve: c.selectPersonsResolver,
 	}
 }
 
-func (c *Controller) readPersonsResolver(p graphql.ResolveParams) (interface{}, error) {
-	// Retrieve persons based on optional filter arguments
-	//TODO: extend.
-	//name, _ := p.Args[argName].(string)
-	//surname, _ := p.Args[argSurname].(string)
-	//age, _ := p.Args[argAge].(int64)
-	//gender, _ := p.Args[argGender].(string)
+// selectPersonsResolver resolver for selectPersonsQuery.
+func (c *Controller) selectPersonsResolver(p graphql.ResolveParams) (interface{}, error) {
+	foundPersons, err := c.strg.SelectPersons(p.Context, p.Args)
+	if err != nil {
+		c.log.Info("["+packageName+":Controller:selectPersonsResolver] find person failed: %v", err)
+		return nil, fmt.Errorf("find persons failed: %w", err)
+	}
 
-	var filteredPersons = []datastructs.PersonData{}
-	//for _, person := range c.persons {
-	//	// Check if each argument matches the person's data
-	//	if (name == "" || person.Name == name) &&
-	//		(surname == "" || person.Surname == surname) &&
-	//		(age == 0 || person.Age == age) &&
-	//		(gender == "" || person.Gender == gender) {
-	//		filteredPersons = append(filteredPersons, person)
-	//	}
-	//}
-	return filteredPersons, nil
+	c.log.Info("["+packageName+":Controller:selectPersonsResolver] some persons were found by request filtering. count: '%d'", len(foundPersons))
+	return foundPersons, nil
 }
 
-func (c *Controller) createPersonMutation() *graphql.Field {
+// insertPersonMutation filter persons.
+// args:
+//   - mandatory: name(string), surname(string), age(int), gender(string), country(string);
+//   - optional: patronymic(string).
+func (c *Controller) insertPersonMutation() *graphql.Field {
 	return &graphql.Field{
 		Type: personType,
 		Args: getFieldConfigArgument([]string{
@@ -130,11 +141,12 @@ func (c *Controller) createPersonMutation() *graphql.Field {
 			argGender,
 			argCountry,
 		}),
-		Resolve: c.createPersonResolver,
+		Resolve: c.insertPersonResolver,
 	}
 }
 
-func (c *Controller) createPersonResolver(p graphql.ResolveParams) (interface{}, error) {
+// insertPersonResolver resolver for insertPersonMutation.
+func (c *Controller) insertPersonResolver(p graphql.ResolveParams) (interface{}, error) {
 	name, _ := p.Args[argName].(string)
 	surname, _ := p.Args[argSurname].(string)
 	patronymic, _ := p.Args[argPatronymic].(string)
@@ -153,15 +165,19 @@ func (c *Controller) createPersonResolver(p graphql.ResolveParams) (interface{},
 
 	newPersonId, err := c.strg.AddPerson(p.Context, &newPerson)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:createPersonResolver] create person failed: %w", err)
+		c.log.Info("["+packageName+":Controller:insertPersonResolver] create person failed: %w", err)
 		return nil, fmt.Errorf("create person failed: %w", err)
 	}
 
 	newPerson.Id = newPersonId
-	c.log.Info("["+packageName+":Controller:createPersonResolver] person with id '%d' successfully created", newPersonId)
+	c.log.Info("["+packageName+":Controller:insertPersonResolver] person with id '%d' successfully created", newPersonId)
 	return newPerson, nil
 }
 
+// updatePersonMutation modifies person partially by id.
+// args:
+//   - mandatory: id(int);
+//   - optional: name(string), surname(string), patronymic(string), age(int), gender(string), country(string).
 func (c *Controller) updatePersonMutation() *graphql.Field {
 	return &graphql.Field{
 		Type: personType,
@@ -178,18 +194,22 @@ func (c *Controller) updatePersonMutation() *graphql.Field {
 	}
 }
 
+// updatePersonResolver resolver for updatePersonMutation.
 func (c *Controller) updatePersonResolver(p graphql.ResolveParams) (interface{}, error) {
 	id, _ := p.Args[argId].(int)
-	updatedPerson, err := c.strg.UpdatePersonByIdPartially(p.Context, int64(id), p.Args)
+	updatedPerson, err := c.strg.UpdatePersonById(p.Context, int64(id), p.Args)
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:updatePersonResolver] update person failed: %v", err)
-		return nil, fmt.Errorf("delete person failed: %w", err)
+		return nil, fmt.Errorf("update person failed: %w", err)
 	}
 
 	c.log.Info("["+packageName+":Controller:updatePersonResolver] person with id '%d' successfully updated", id)
 	return updatedPerson, nil
 }
 
+// deletePersonMutation deletes person by id.
+// args:
+//   - mandatory: id(int).
 func (c *Controller) deletePersonMutation() *graphql.Field {
 	return &graphql.Field{
 		Type: personType,
@@ -200,6 +220,7 @@ func (c *Controller) deletePersonMutation() *graphql.Field {
 	}
 }
 
+// deletePersonResolver resolver for deletePersonMutation.
 func (c *Controller) deletePersonResolver(p graphql.ResolveParams) (interface{}, error) {
 	id, _ := p.Args[argId].(int)
 	deletedPerson, err := c.strg.DeletePersonById(p.Context, int64(id))

@@ -1,0 +1,58 @@
+{
+    selectPersons(gender: "male", age: 20, page_num: 1, page_size: 5) {
+        Id
+        Name
+        Surname
+        Patronymic
+        Age
+        Gender
+        Country
+    }
+}
+
+mutation {
+    insertPerson(
+        name: "John"
+        surname: "Doe"
+        patronymic: "Smith"
+        age: 30
+        gender: "Male"
+        country: "USA"
+    ) {
+        Id
+        Name
+        Surname
+        Patronymic
+        Age
+        Gender
+        Country
+    }
+}
+
+mutation {
+    updatePerson(
+        id: 1
+        name: "Updated Name"
+        age: 35
+    ) {
+        Id
+        Name
+        Surname
+        Patronymic
+        Age
+        Gender
+        Country
+    }
+}
+
+mutation {
+    deletePerson(id: 1) {
+        Id
+        Name
+        Surname
+        Patronymic
+        Age
+        Gender
+        Country
+    }
+}

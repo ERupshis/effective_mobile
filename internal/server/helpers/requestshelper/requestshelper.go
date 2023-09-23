@@ -47,6 +47,21 @@ func FilterValues(values map[string]interface{}) map[string]interface{} {
 	return res
 }
 
+func FilterPageNumAndPageSize(values map[string]interface{}) (int64, int64) {
+	var pageNum int64
+	var pageSize int64
+
+	if val, ok := values["page_num"]; ok {
+		pageNum = int64(val.(int))
+	}
+
+	if val, ok := values["page_size"]; ok {
+		pageSize = int64(val.(int))
+	}
+
+	return pageNum, pageSize
+}
+
 func ParsePageAndPageSize(values url.Values) (int64, int64) {
 	rawPage := values.Get("page_num")
 	rawPageSize := values.Get("page_size")
