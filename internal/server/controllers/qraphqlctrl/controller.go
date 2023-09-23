@@ -2,6 +2,7 @@ package qraphqlctrl
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 	"github.com/erupshis/effective_mobile/internal/logger"
@@ -75,11 +76,16 @@ func (c *Controller) Route() *chi.Mux {
 	graphHandler, err := c.createHandler()
 	if err != nil {
 		c.log.Info("["+packageName+":Controller:Route] failed to create route: %v", err)
+		r.HandleFunc("/", c.InternalErrorHandler)
 		return r
 	}
 
 	r.Handle("/", graphHandler)
 	return r
+}
+
+func (c *Controller) InternalErrorHandler(w http.ResponseWriter, _ *http.Request) {
+	http.Error(w, "graphql currently unavailable", http.StatusInternalServerError)
 }
 
 func (c *Controller) createHandler() (*handler.Handler, error) {
