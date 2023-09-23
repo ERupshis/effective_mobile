@@ -89,7 +89,7 @@ func (s *Storage) UpdatePersonById(ctx context.Context, id int64, values map[str
 		return nil, fmt.Errorf("storage: update: missing correct filters in request")
 	}
 
-	affectedCount, err := s.manager.UpdatePersonByIdPartially(ctx, id, filteredValues)
+	affectedCount, err := s.manager.UpdatePersonById(ctx, id, filteredValues)
 	if err != nil {
 		return nil, fmt.Errorf("storage: update: cannot process: %w", err)
 	}

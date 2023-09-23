@@ -172,45 +172,7 @@ func (p *postgresDB) DeletePersonById(ctx context.Context, personId int64) (int6
 	return affectedCount, nil
 }
 
-func (p *postgresDB) UpdatePersonById(ctx context.Context, id int64, data *datastructs.PersonData) (int64, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	p.log.Info("[postgresDB:UpdatePersonById] start transaction")
-	errorMessage := "update person in db: %w"
-	tx, err := p.database.BeginTx(ctx, nil)
-	if err != nil {
-		return 0, fmt.Errorf(errorMessage, err)
-	}
-
-	genderId, err := p.handler.GetAdditionalId(ctx, tx, data.Gender, GendersTable)
-	if err != nil {
-		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return 0, fmt.Errorf(errorMessage, err)
-	}
-
-	countryId, err := p.handler.GetAdditionalId(ctx, tx, data.Country, CountriesTable)
-	if err != nil {
-		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return 0, fmt.Errorf(errorMessage, err)
-	}
-
-	affectedCount, err := p.handler.UpdatePersonById(ctx, tx, id, data, genderId, countryId)
-	if err != nil {
-		helpers.ExecuteWithLogError(tx.Rollback, p.log)
-		return 0, fmt.Errorf(errorMessage, err)
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return 0, fmt.Errorf(errorMessage, err)
-	}
-
-	p.log.Info("[postgresDB:UpdatePersonById] transaction successful")
-	return affectedCount, nil
-}
-
-func (p *postgresDB) UpdatePersonByIdPartially(ctx context.Context, id int64, values map[string]interface{}) (int64, error) {
+func (p *postgresDB) UpdatePersonById(ctx context.Context, id int64, values map[string]interface{}) (int64, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 

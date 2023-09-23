@@ -137,7 +137,6 @@ func TestRetryCallWithTimeout(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		//TODO: need to fix checks.
 		_, _, err := RetryCallWithTimeout(tt.args.ctx, tt.args.log, tt.args.intervals, tt.args.repeatableErrors, tt.args.callback)
 		assert.Equal(t, tt.wantErr, err)
 	}
