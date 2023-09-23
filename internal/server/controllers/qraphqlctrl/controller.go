@@ -17,11 +17,11 @@ const packageName = "graphqlctrl"
 var personType = getPersonType()
 
 type Controller struct {
-	strg storage.Storage
+	strg storage.BaseStorage
 	log  logger.BaseLogger
 }
 
-func Create(strg storage.Storage, log logger.BaseLogger) *Controller {
+func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller {
 	return &Controller{
 		strg: strg,
 		log:  log,
@@ -179,32 +179,15 @@ func (c *Controller) updatePersonMutation() *graphql.Field {
 }
 
 func (c *Controller) updatePersonResolver(p graphql.ResolveParams) (interface{}, error) {
-	//TODO: need to support partial update.
-	//id, _ := p.Args["argId"].(int64)
-	//for i, person := range c.persons {
-	//	if person.Id == id {
-	//		if name, ok := p.Args[argName].(string); ok {
-	//			c.persons[i].Name = name
-	//		}
-	//		if surname, ok := p.Args[argSurname].(string); ok {
-	//			c.persons[i].Surname = surname
-	//		}
-	//		if patronymic, ok := p.Args[argPatronymic].(string); ok {
-	//			c.persons[i].Patronymic = patronymic
-	//		}
-	//		if age, ok := p.Args[argAge].(int64); ok {
-	//			c.persons[i].Age = age
-	//		}
-	//		if gender, ok := p.Args[argGender].(string); ok {
-	//			c.persons[i].Gender = gender
-	//		}
-	//		if country, ok := p.Args[argCountry].(string); ok {
-	//			c.persons[i].Country = country
-	//		}
-	//		return c.persons[i], nil
-	//	}
-	//}
-	return nil, nil
+	id, _ := p.Args[argId].(int)
+	updatedPerson, err := c.strg.UpdatePersonByIdPartially(p.Context, int64(id), p.Args)
+	if err != nil {
+		c.log.Info("["+packageName+":Controller:updatePersonResolver] update person failed: %v", err)
+		return nil, fmt.Errorf("delete person failed: %w", err)
+	}
+
+	c.log.Info("["+packageName+":Controller:updatePersonResolver] person with id '%d' successfully updated", id)
+	return updatedPerson, nil
 }
 
 func (c *Controller) deletePersonMutation() *graphql.Field {

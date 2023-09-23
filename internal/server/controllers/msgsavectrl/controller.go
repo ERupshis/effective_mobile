@@ -6,7 +6,7 @@ import (
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
-	"github.com/erupshis/effective_mobile/internal/server/storage/managers"
+	"github.com/erupshis/effective_mobile/internal/server/storage"
 )
 
 const packageName = "msgsavectrl"
@@ -18,11 +18,11 @@ type Controller struct {
 	//OUTPUT channels.
 	chError chan<- msgbroker.Message
 
+	strg storage.BaseStorage
 	log  logger.BaseLogger
-	strg managers.BaseStorageManager
 }
 
-func Create(chIn <-chan datastructs.ExtraDataFilling, chError chan<- msgbroker.Message, strg managers.BaseStorageManager, log logger.BaseLogger) *Controller {
+func Create(chIn <-chan datastructs.ExtraDataFilling, chError chan<- msgbroker.Message, strg storage.BaseStorage, log logger.BaseLogger) *Controller {
 	return &Controller{
 		chIn:    chIn,
 		chError: chError,
