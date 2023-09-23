@@ -68,7 +68,7 @@ func (c *Controller) createPersonHandler(w http.ResponseWriter, r *http.Request)
 
 	_, err = requestshelper.IsPersonDataValid(personData, true)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:createPersonHandler] data validation: %v", err)
+		c.log.Info("["+packageName+":Controller:createPersonHandler] data validation failed: %v", err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
@@ -80,6 +80,7 @@ func (c *Controller) createPersonHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	c.log.Info("["+packageName+":Controller:createPersonHandler] person with id '%d' successfully added", newPersonId)
 	responseBody := []byte(fmt.Sprintf("Added with id: %d", newPersonId))
 	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
 	w.Header().Add("Content-Type", "text/plain")
@@ -112,6 +113,7 @@ func (c *Controller) deletePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	c.log.Info("["+packageName+":Controller:deletePersonByIdHandler] person with id '%d' successfully deleted", id)
 	responseBody := []byte("successfully deleted")
 	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
 	w.Header().Add("Content-Type", "text/plain")
@@ -148,7 +150,7 @@ func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 
 	_, err = requestshelper.IsPersonDataValid(personData, true)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] data validation: %v", err)
+		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] data validation failed: %v", err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
@@ -166,6 +168,7 @@ func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] person with id '%d' successfully updated", id)
 	responseBody := []byte("fully updated")
 	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
 	w.Header().Add("Content-Type", "text/plain")
@@ -187,7 +190,7 @@ func (c *Controller) updatePersonByIdPartiallyHandler(w http.ResponseWriter, r *
 
 	buf := bytes.Buffer{}
 	if _, err := buf.ReadFrom(r.Body); err != nil {
-		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] failed to read request body: %v", err)
+		c.log.Info("["+packageName+":Controller:updatePersonByIdPartiallyHandler] failed to read request body: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -196,31 +199,32 @@ func (c *Controller) updatePersonByIdPartiallyHandler(w http.ResponseWriter, r *
 	var valuesToUpdate map[string]interface{}
 	err = json.Unmarshal(buf.Bytes(), &valuesToUpdate)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] failed to parse query params: %v", err)
+		c.log.Info("["+packageName+":Controller:updatePersonByIdPartiallyHandler] failed to parse query params: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	valuesToUpdate = requestshelper.FilterValues(valuesToUpdate)
 	if len(valuesToUpdate) == 0 {
-		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] missing values to update in request '%v'", buf.Bytes())
+		c.log.Info("["+packageName+":Controller:updatePersonByIdPartiallyHandler] missing values to update in request '%v'", buf.Bytes())
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 
 	affectedCount, err := c.strg.UpdatePersonByIdPartially(r.Context(), int64(id), valuesToUpdate)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] cannot process: %v", err)
+		c.log.Info("["+packageName+":Controller:updatePersonByIdPartiallyHandler] cannot process: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if affectedCount == 0 {
-		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] request has no effect with id '%d'", id)
+		c.log.Info("["+packageName+":Controller:updatePersonByIdPartiallyHandler] request has no effect with id '%d'", id)
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 
+	c.log.Info("["+packageName+":Controller:updatePersonByIdPartiallyHandler] person with id '%d' successfully updated", id)
 	responseBody := []byte("partially updated")
 	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
 	w.Header().Add("Content-Type", "text/plain")

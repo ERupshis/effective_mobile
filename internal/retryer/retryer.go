@@ -105,7 +105,7 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 		}
 
 		if !canRetryCall(err, repeatableErrors) {
-			log.Info("this kind of error is not retriable: %w", err)
+			log.Info("this kind of error is not retriable: %v", err)
 			break
 		}
 	}

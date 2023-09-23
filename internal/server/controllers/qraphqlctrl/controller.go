@@ -156,14 +156,17 @@ func (c *Controller) createPersonResolver(p graphql.ResolveParams) (interface{},
 
 	_, err := requestshelper.IsPersonDataValid(&newPerson, true)
 	if err != nil {
+		c.log.Info("["+packageName+":Controller:createPersonResolver] data validation failed: %v", err)
 		return newPerson, fmt.Errorf("resolve create person:%w", err)
 	}
 
 	newPersonId, err := c.strg.AddPerson(p.Context, &newPerson)
 	if err != nil {
+		c.log.Info("["+packageName+":Controller:createPersonResolver] cannot process: %v", err)
 		return newPerson, fmt.Errorf("resolve create person: %w", err)
 	}
 
+	c.log.Info("["+packageName+":Controller:createPersonResolver] person successfully added with id '%d'", newPersonId)
 	newPerson.Id = newPersonId
 	return newPerson, nil
 }
@@ -185,7 +188,6 @@ func (c *Controller) updatePersonMutation() *graphql.Field {
 }
 
 func (c *Controller) updatePersonResolver(p graphql.ResolveParams) (interface{}, error) {
-	// Update a person by ID
 	//TODO: need to support partial update.
 	id, _ := p.Args["argId"].(int64)
 	for i, person := range c.persons {
@@ -226,14 +228,25 @@ func (c *Controller) deletePersonMutation() *graphql.Field {
 
 func (c *Controller) deletePersonResolver(p graphql.ResolveParams) (interface{}, error) {
 	// Delete a person by ID
-	id, _ := p.Args[argId].(int64)
-	for i, person := range c.persons {
-		if person.Id == id {
-			// Remove the person from the slice
-			deletedPerson := c.persons[i]
-			c.persons = append(c.persons[:i], c.persons[i+1:]...)
-			return deletedPerson, nil
-		}
+	id, _ := p.Args[argId].(int)
+
+	personToDelete, err := c.strg.GetPersons(p.Context, map[string]interface{}{"id": id}, 0, 0)
+	if err != nil {
+		c.log.Info("["+packageName+":Controller:deletePersonByIdHandler] person was not found in storage by id '%s': %v", id, err)
+		return nil, fmt.Errorf("delete person failed: %w", err)
 	}
-	return nil, nil
+
+	affectedCount, err := c.strg.DeletePersonById(p.Context, int64(id))
+	if err != nil {
+		c.log.Info("["+packageName+":Controller:deletePersonByIdHandler] person id is not valid: %v", err)
+		return nil, fmt.Errorf("delete person failed: %w", err)
+	}
+
+	if affectedCount == 0 {
+		c.log.Info("["+packageName+":Controller:deletePersonResolver] request has no effect with id '%d'", id)
+		return nil, fmt.Errorf("person with id '%d' was not found", id)
+	}
+
+	c.log.Info("["+packageName+":Controller:deletePersonResolver] person with id '%d' successfully deleted", id)
+	return personToDelete[0], nil
 }

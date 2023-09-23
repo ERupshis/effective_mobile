@@ -160,6 +160,8 @@ func createSelectPersonsStmt(ctx context.Context, tx *sql.Tx, filters map[string
 	if len(filters) != 0 {
 		for key := range filters {
 			switch key {
+			case "id":
+				key = GetTableFullName(PersonsTable) + ".id"
 			case "name":
 				key = GetTableFullName(PersonsTable) + ".name"
 			case "gender":
