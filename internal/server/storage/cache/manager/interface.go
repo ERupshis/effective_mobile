@@ -6,6 +6,8 @@ import (
 )
 
 // BaseCacheManager cache manager interface.
+//
+//go:generate mockgen -destination=../../../../../mocks/mock_BaseCacheManager.go -package=mocks github.com/erupshis/effective_mobile/internal/server/storage/cache/manager BaseCacheManager
 type BaseCacheManager interface {
 	// Add adds new value in cache.
 	Add(ctx context.Context, key map[string]interface{}, val interface{}) error
