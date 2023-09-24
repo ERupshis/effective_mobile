@@ -1,0 +1,384 @@
+
+
+package config // import "github.com/erupshis/effective_mobile/internal/agent/config"
+
+type Config struct{ ... }
+    func Parse() Config
+package msggenerator // import "github.com/erupshis/effective_mobile/internal/agent/msggenerator"
+
+func Run(ctx context.Context, producer msgbroker.Producer, log logger.BaseLogger)
+package client // import "github.com/erupshis/effective_mobile/internal/client"
+
+type BaseClient interface{ ... }
+    func CreateDefault(log logger.BaseLogger) BaseClient
+type DefaultClient struct{ ... }
+package confighelper // import "github.com/erupshis/effective_mobile/internal/confighelper"
+
+func Atoi64(value string) (int64, error)
+func SetEnvToParamIfNeed(param interface{}, val string)
+package datastructs // import "github.com/erupshis/effective_mobile/internal/datastructs"
+
+type Age struct{ ... }
+type Countries struct{ ... }
+type CountryData struct{ ... }
+type Error struct{ ... }
+type ErrorMessage struct{ ... }
+type ExtraDataFilling struct{ ... }
+type Gender struct{ ... }
+type PersonData struct{ ... }
+package helpers // import "github.com/erupshis/effective_mobile/internal/helpers"
+
+func ExecuteWithLogError(callback func() error, log logger.BaseLogger)
+func InterfaceToString(i interface{}) (string, error)
+package logger // import "github.com/erupshis/effective_mobile/internal/logger"
+
+type BaseLogger interface{ ... }
+    func CreateZapLogger(level string) (BaseLogger, error)
+type Logger struct{ ... }
+package msgbroker // import "github.com/erupshis/effective_mobile/internal/msgbroker"
+
+type Consumer interface{ ... }
+    func CreateKafkaConsumer(brokerAddr []string, topic string, groupID string, log logger.BaseLogger) Consumer
+type KafkaConsumer struct{ ... }
+type KafkaProducer struct{ ... }
+type Message struct{ ... }
+type Producer interface{ ... }
+    func CreateKafkaProducer(brokerAddr []string, topic string, log logger.BaseLogger) Producer
+package retryer // import "github.com/erupshis/effective_mobile/internal/retryer"
+
+func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals []int, ...) (int64, []byte, error)
+func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, intervals []int, ...) error
+package config // import "github.com/erupshis/effective_mobile/internal/server/config"
+
+type Config struct{ ... }
+    func Parse() Config
+package errorsctrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/errorsctrl"
+
+type Controller struct{ ... }
+    func Create(chansIn []<-chan msgbroker.Message, chanOut chan<- msgbroker.Message, ...) *Controller
+package extradatactrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/extradatactrl"
+
+type Controller struct{ ... }
+    func Create(chIn <-chan datastructs.ExtraDataFilling, ...) *Controller
+package httpctrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/httpctrl"
+
+type Controller struct{ ... }
+    func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller
+package msgbrokerctrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/msgbrokerctrl"
+
+type Controller struct{ ... }
+    func Create(chIn <-chan msgbroker.Message, chError chan<- msgbroker.Message, ...) *Controller
+package msgsavectrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/msgsavectrl"
+
+type Controller struct{ ... }
+    func Create(chIn <-chan datastructs.ExtraDataFilling, chError chan<- msgbroker.Message, ...) *Controller
+package qraphqlctrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/qraphqlctrl"
+
+Package qraphqlctrl provides GraphQL handling.
+
+type Controller struct{ ... }
+    func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller
+package msghelper // import "github.com/erupshis/effective_mobile/internal/server/helpers/msghelper"
+
+func CreateErrorMessage(originalMsg []byte, err error) ([]byte, error)
+func IsMessageValid(personData datastructs.PersonData) (bool, error)
+func PutErrorMessageInChan(chError chan<- msgbroker.Message, msg *msgbroker.Message, errMsgKey string, ...) error
+package requestshelper // import "github.com/erupshis/effective_mobile/internal/server/helpers/requestshelper"
+
+var FieldsInPersonData = []string{ ... }
+func ConvertQueryValueIntoString(value interface{}) string
+func FilterPageNumAndPageSize(values map[string]interface{}) (map[string]interface{}, int64, int64)
+func FilterValues(values map[string]interface{}) map[string]interface{}
+func IsPersonDataValid(data *datastructs.PersonData, allFieldsToCheck bool) (bool, error)
+func ParsePersonDataFromJSON(rawData []byte) (*datastructs.PersonData, error)
+func ParseQueryValuesIntoMap(values url.Values) (map[string]interface{}, error)
+package storage // import "github.com/erupshis/effective_mobile/internal/server/storage"
+
+Package storage provides main storage interface and implementation.
+
+type BaseStorage interface{ ... }
+    func Create(manager managers.BaseStorageManager, log logger.BaseLogger) BaseStorage
+package cache // import "github.com/erupshis/effective_mobile/internal/server/storage/cache"
+
+Package cache implements cache for storage.BaseStorage.
+
+func Create(cacheManager manager.BaseCacheManager, baseStorage storage.BaseStorage, ...) storage.BaseStorage
+package manager // import "github.com/erupshis/effective_mobile/internal/server/storage/cache/manager"
+
+Package manager provides cache manager interface and implements it
+
+type BaseCacheManager interface{ ... }
+    func CreateRedis(ctx context.Context, dsn string, log logger.BaseLogger) (BaseCacheManager, error)
+package managers // import "github.com/erupshis/effective_mobile/internal/server/storage/managers"
+
+Package managers provides interface for storage manager.
+
+type BaseStorageManager interface{ ... }
+package postgresql // import "github.com/erupshis/effective_mobile/internal/server/storage/managers/postgresql"
+
+Package postgresql postgresql handling PostgreSQL database.
+
+const SchemaName = "persons_data" ...
+func CreatePostgreDB(ctx context.Context, cfg config.Config, queriesHandler QueriesHandler, ...) (managers.BaseStorageManager, error)
+type QueriesHandler struct{ ... }
+    func CreateHandler(log logger.BaseLogger) QueriesHandler
+
+
+package config // import "github.com/erupshis/effective_mobile/internal/agent/config"
+
+type Config struct{ ... }
+    func Parse() Config
+package msggenerator // import "github.com/erupshis/effective_mobile/internal/agent/msggenerator"
+
+func Run(ctx context.Context, producer msgbroker.Producer, log logger.BaseLogger)
+package client // import "github.com/erupshis/effective_mobile/internal/client"
+
+type BaseClient interface{ ... }
+    func CreateDefault(log logger.BaseLogger) BaseClient
+type DefaultClient struct{ ... }
+package confighelper // import "github.com/erupshis/effective_mobile/internal/confighelper"
+
+func Atoi64(value string) (int64, error)
+func SetEnvToParamIfNeed(param interface{}, val string)
+package datastructs // import "github.com/erupshis/effective_mobile/internal/datastructs"
+
+type Age struct{ ... }
+type Countries struct{ ... }
+type CountryData struct{ ... }
+type Error struct{ ... }
+type ErrorMessage struct{ ... }
+type ExtraDataFilling struct{ ... }
+type Gender struct{ ... }
+type PersonData struct{ ... }
+package helpers // import "github.com/erupshis/effective_mobile/internal/helpers"
+
+func ExecuteWithLogError(callback func() error, log logger.BaseLogger)
+func InterfaceToString(i interface{}) (string, error)
+package logger // import "github.com/erupshis/effective_mobile/internal/logger"
+
+type BaseLogger interface{ ... }
+    func CreateZapLogger(level string) (BaseLogger, error)
+type Logger struct{ ... }
+package msgbroker // import "github.com/erupshis/effective_mobile/internal/msgbroker"
+
+type Consumer interface{ ... }
+    func CreateKafkaConsumer(brokerAddr []string, topic string, groupID string, log logger.BaseLogger) Consumer
+type KafkaConsumer struct{ ... }
+type KafkaProducer struct{ ... }
+type Message struct{ ... }
+type Producer interface{ ... }
+    func CreateKafkaProducer(brokerAddr []string, topic string, log logger.BaseLogger) Producer
+package retryer // import "github.com/erupshis/effective_mobile/internal/retryer"
+
+func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals []int, ...) (int64, []byte, error)
+func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, intervals []int, ...) error
+package config // import "github.com/erupshis/effective_mobile/internal/server/config"
+
+type Config struct{ ... }
+    func Parse() Config
+package errorsctrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/errorsctrl"
+
+type Controller struct{ ... }
+    func Create(chansIn []<-chan msgbroker.Message, chanOut chan<- msgbroker.Message, ...) *Controller
+package extradatactrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/extradatactrl"
+
+type Controller struct{ ... }
+    func Create(chIn <-chan datastructs.ExtraDataFilling, ...) *Controller
+package httpctrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/httpctrl"
+
+type Controller struct{ ... }
+    func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller
+package msgbrokerctrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/msgbrokerctrl"
+
+type Controller struct{ ... }
+    func Create(chIn <-chan msgbroker.Message, chError chan<- msgbroker.Message, ...) *Controller
+package msgsavectrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/msgsavectrl"
+
+type Controller struct{ ... }
+    func Create(chIn <-chan datastructs.ExtraDataFilling, chError chan<- msgbroker.Message, ...) *Controller
+package qraphqlctrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/qraphqlctrl"
+
+Package qraphqlctrl provides GraphQL handling.
+
+type Controller struct{ ... }
+    func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller
+package msghelper // import "github.com/erupshis/effective_mobile/internal/server/helpers/msghelper"
+
+Package msghelper provides functions for kafka's messages validation, creation
+and handling error messages.
+
+func CreateErrorMessage(originalMsg []byte, err error) ([]byte, error)
+func IsMessageValid(personData datastructs.PersonData) (bool, error)
+func PutErrorMessageInChan(chError chan<- msgbroker.Message, msg *msgbroker.Message, errMsgKey string, ...) error
+package requestshelper // import "github.com/erupshis/effective_mobile/internal/server/helpers/requestshelper"
+
+Package requestshelper provides functions for input data parsing, validation,
+type conversion, modification.
+
+var FieldsInPersonData = []string{ ... }
+func ConvertQueryValueIntoString(value interface{}) string
+func FilterPageNumAndPageSize(values map[string]interface{}) (map[string]interface{}, int64, int64)
+func FilterValues(values map[string]interface{}) map[string]interface{}
+func IsPersonDataValid(data *datastructs.PersonData, allFieldsToCheck bool) (bool, error)
+func ParsePersonDataFromJSON(rawData []byte) (*datastructs.PersonData, error)
+func ParseQueryValuesIntoMap(values url.Values) (map[string]interface{}, error)
+package storage // import "github.com/erupshis/effective_mobile/internal/server/storage"
+
+Package storage provides main storage interface and implementation.
+
+type BaseStorage interface{ ... }
+    func Create(manager managers.BaseStorageManager, log logger.BaseLogger) BaseStorage
+package cache // import "github.com/erupshis/effective_mobile/internal/server/storage/cache"
+
+Package cache implements cache for storage.BaseStorage.
+
+func Create(cacheManager manager.BaseCacheManager, baseStorage storage.BaseStorage, ...) storage.BaseStorage
+package manager // import "github.com/erupshis/effective_mobile/internal/server/storage/cache/manager"
+
+Package manager provides cache manager interface and implements it.
+
+type BaseCacheManager interface{ ... }
+    func CreateRedis(ctx context.Context, dsn string, log logger.BaseLogger) (BaseCacheManager, error)
+package managers // import "github.com/erupshis/effective_mobile/internal/server/storage/managers"
+
+Package managers provides interface for storage manager.
+
+type BaseStorageManager interface{ ... }
+package postgresql // import "github.com/erupshis/effective_mobile/internal/server/storage/managers/postgresql"
+
+Package postgresql postgresql handling PostgreSQL database.
+
+const SchemaName = "persons_data" ...
+func CreatePostgreDB(ctx context.Context, cfg config.Config, queriesHandler QueriesHandler, ...) (managers.BaseStorageManager, error)
+type QueriesHandler struct{ ... }
+    func CreateHandler(log logger.BaseLogger) QueriesHandler
+
+
+package config // import "github.com/erupshis/effective_mobile/internal/agent/config"
+
+type Config struct{ ... }
+    func Parse() Config
+package msggenerator // import "github.com/erupshis/effective_mobile/internal/agent/msggenerator"
+
+func Run(ctx context.Context, producer msgbroker.Producer, log logger.BaseLogger)
+package client // import "github.com/erupshis/effective_mobile/internal/client"
+
+type BaseClient interface{ ... }
+    func CreateDefault(log logger.BaseLogger) BaseClient
+type DefaultClient struct{ ... }
+package confighelper // import "github.com/erupshis/effective_mobile/internal/confighelper"
+
+func Atoi64(value string) (int64, error)
+func SetEnvToParamIfNeed(param interface{}, val string)
+package datastructs // import "github.com/erupshis/effective_mobile/internal/datastructs"
+
+type Age struct{ ... }
+type Countries struct{ ... }
+type CountryData struct{ ... }
+type Error struct{ ... }
+type ErrorMessage struct{ ... }
+type ExtraDataFilling struct{ ... }
+type Gender struct{ ... }
+type PersonData struct{ ... }
+package helpers // import "github.com/erupshis/effective_mobile/internal/helpers"
+
+func ExecuteWithLogError(callback func() error, log logger.BaseLogger)
+func InterfaceToString(i interface{}) (string, error)
+package logger // import "github.com/erupshis/effective_mobile/internal/logger"
+
+type BaseLogger interface{ ... }
+    func CreateZapLogger(level string) (BaseLogger, error)
+type Logger struct{ ... }
+package msgbroker // import "github.com/erupshis/effective_mobile/internal/msgbroker"
+
+type Consumer interface{ ... }
+    func CreateKafkaConsumer(brokerAddr []string, topic string, groupID string, log logger.BaseLogger) Consumer
+type KafkaConsumer struct{ ... }
+type KafkaProducer struct{ ... }
+type Message struct{ ... }
+type Producer interface{ ... }
+    func CreateKafkaProducer(brokerAddr []string, topic string, log logger.BaseLogger) Producer
+package retryer // import "github.com/erupshis/effective_mobile/internal/retryer"
+
+func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals []int, ...) (int64, []byte, error)
+func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, intervals []int, ...) error
+package config // import "github.com/erupshis/effective_mobile/internal/server/config"
+
+type Config struct{ ... }
+    func Parse() Config
+package errorsctrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/errorsctrl"
+
+type Controller struct{ ... }
+    func Create(chansIn []<-chan msgbroker.Message, chanOut chan<- msgbroker.Message, ...) *Controller
+package extradatactrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/extradatactrl"
+
+type Controller struct{ ... }
+    func Create(chIn <-chan datastructs.ExtraDataFilling, ...) *Controller
+package httpctrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/httpctrl"
+
+type Controller struct{ ... }
+    func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller
+package msgbrokerctrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/msgbrokerctrl"
+
+type Controller struct{ ... }
+    func Create(chIn <-chan msgbroker.Message, chError chan<- msgbroker.Message, ...) *Controller
+package msgsavectrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/msgsavectrl"
+
+type Controller struct{ ... }
+    func Create(chIn <-chan datastructs.ExtraDataFilling, chError chan<- msgbroker.Message, ...) *Controller
+package qraphqlctrl // import "github.com/erupshis/effective_mobile/internal/server/controllers/qraphqlctrl"
+
+Package qraphqlctrl provides GraphQL handling.
+
+type Controller struct{ ... }
+    func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller
+package msghelper // import "github.com/erupshis/effective_mobile/internal/server/helpers/msghelper"
+
+Package msghelper provides functions for kafka's messages validation, creation
+and handling error messages.
+
+func CreateErrorMessage(originalMsg []byte, err error) ([]byte, error)
+func IsMessageValid(personData datastructs.PersonData) (bool, error)
+func PutErrorMessageInChan(chError chan<- msgbroker.Message, msg *msgbroker.Message, errMsgKey string, ...) error
+package requestshelper // import "github.com/erupshis/effective_mobile/internal/server/helpers/requestshelper"
+
+Package requestshelper provides functions for input data parsing, validation,
+type conversion, modification.
+
+var FieldsInPersonData = []string{ ... }
+func ConvertQueryValueIntoString(value interface{}) string
+func FilterPageNumAndPageSize(values map[string]interface{}) (map[string]interface{}, int64, int64)
+func FilterValues(values map[string]interface{}) map[string]interface{}
+func IsPersonDataValid(data *datastructs.PersonData, allFieldsToCheck bool) (bool, error)
+func ParsePersonDataFromJSON(rawData []byte) (*datastructs.PersonData, error)
+func ParseQueryValuesIntoMap(values url.Values) (map[string]interface{}, error)
+package storage // import "github.com/erupshis/effective_mobile/internal/server/storage"
+
+Package storage provides main storage interface and implementation.
+
+type BaseStorage interface{ ... }
+    func Create(manager managers.BaseStorageManager, log logger.BaseLogger) BaseStorage
+package cache // import "github.com/erupshis/effective_mobile/internal/server/storage/cache"
+
+Package cache implements cache for storage.BaseStorage.
+
+func Create(cacheManager manager.BaseCacheManager, baseStorage storage.BaseStorage, ...) storage.BaseStorage
+package manager // import "github.com/erupshis/effective_mobile/internal/server/storage/cache/manager"
+
+Package manager provides cache manager interface and implements it.
+
+type BaseCacheManager interface{ ... }
+    func CreateRedis(ctx context.Context, dsn string, log logger.BaseLogger) (BaseCacheManager, error)
+package managers // import "github.com/erupshis/effective_mobile/internal/server/storage/managers"
+
+Package managers provides interface for storage manager.
+
+type BaseStorageManager interface{ ... }
+package postgresql // import "github.com/erupshis/effective_mobile/internal/server/storage/managers/postgresql"
+
+Package postgresql postgresql handling PostgreSQL database.
+
+const SchemaName = "persons_data" ...
+func CreatePostgreDB(ctx context.Context, cfg config.Config, queriesHandler QueriesHandler, ...) (managers.BaseStorageManager, error)
+type QueriesHandler struct{ ... }
+    func CreateHandler(log logger.BaseLogger) QueriesHandler

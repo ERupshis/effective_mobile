@@ -1,4 +1,4 @@
-// Package manager provides cache manager interface and implements it
+// Package manager provides cache manager interface and implements it.
 package manager
 
 import (

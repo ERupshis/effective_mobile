@@ -1,3 +1,4 @@
+// Package requestshelper provides functions for input data parsing, validation, type conversion, modification.
 package requestshelper
 
 import (
@@ -10,8 +11,10 @@ import (
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 )
 
+// FieldsInPersonData slice of available values in query.
 var FieldsInPersonData = []string{"id", "name", "surname", "patronymic", "age", "gender", "country", "page_num", "page_size"}
 
+// ParsePersonDataFromJSON parse request body(json type) into person data struct.
 func ParsePersonDataFromJSON(rawData []byte) (*datastructs.PersonData, error) {
 	personData := &datastructs.PersonData{}
 	if err := json.Unmarshal(rawData, &personData); err != nil {
@@ -21,6 +24,8 @@ func ParsePersonDataFromJSON(rawData []byte) (*datastructs.PersonData, error) {
 	return personData, nil
 }
 
+// ParseQueryValuesIntoMap parse url.Values int map, filters and leave only queries with keys from FieldsInPersonData,
+// Generates error in case of incorrect queries in request.
 func ParseQueryValuesIntoMap(values url.Values) (map[string]interface{}, error) {
 	res := map[string]interface{}{}
 	for _, fieldName := range FieldsInPersonData {
@@ -38,6 +43,8 @@ func ParseQueryValuesIntoMap(values url.Values) (map[string]interface{}, error) 
 	return res, err
 }
 
+// IsPersonDataValid validates person data structs and check fields or non-empty value.
+// Patronymic is ignored.
 func IsPersonDataValid(data *datastructs.PersonData, allFieldsToCheck bool) (bool, error) {
 	errorCriticalMessage := ""
 	errorNonCriticalMessage := ""
@@ -82,6 +89,8 @@ func IsPersonDataValid(data *datastructs.PersonData, allFieldsToCheck bool) (boo
 	return true, nil
 }
 
+// FilterValues filters maps[string]interface{} values in and leave values with key equal to some from FieldsInPersonData.
+// Also lowers register of all string values.
 func FilterValues(values map[string]interface{}) map[string]interface{} {
 	res := map[string]interface{}{}
 	for _, fieldName := range FieldsInPersonData {
@@ -92,6 +101,7 @@ func FilterValues(values map[string]interface{}) map[string]interface{} {
 	return res
 }
 
+// FilterPageNumAndPageSize extracts pageNum and pageSize values from values map, otherwise returns 0, 0.
 func FilterPageNumAndPageSize(values map[string]interface{}) (map[string]interface{}, int64, int64) {
 	var pageNum int64
 	var pageSize int64
@@ -109,6 +119,7 @@ func FilterPageNumAndPageSize(values map[string]interface{}) (map[string]interfa
 	return values, pageNum, pageSize
 }
 
+// convertQueryValueIntoInt64 converts any value into int64, if possible. Otherwise returns 0.
 func convertQueryValueIntoInt64(value interface{}) int64 {
 	var res int64
 	switch param := value.(type) {
@@ -128,6 +139,7 @@ func convertQueryValueIntoInt64(value interface{}) int64 {
 	return res
 }
 
+// ConvertQueryValueIntoString provides some value into string representation (for interface{} types).
 func ConvertQueryValueIntoString(value interface{}) string {
 	return fmt.Sprintf("%v", value)
 }

@@ -1,3 +1,4 @@
+// Package msghelper provides functions for kafka's messages validation, creation and handling error messages.
 package msghelper
 
 import (
@@ -8,6 +9,7 @@ import (
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
 )
 
+// PutErrorMessageInChan creates error message for kafka with message key and body and puts it in channel for sending into kafka's topic.
 func PutErrorMessageInChan(chError chan<- msgbroker.Message, msg *msgbroker.Message, errMsgKey string, err error) error {
 	msgErr, err := CreateErrorMessage(msg.Value, err)
 	if err != nil {
@@ -22,6 +24,7 @@ func PutErrorMessageInChan(chError chan<- msgbroker.Message, msg *msgbroker.Mess
 	return nil
 }
 
+// CreateErrorMessage creates error message for kafka.
 func CreateErrorMessage(originalMsg []byte, err error) ([]byte, error) {
 	msgError, errMarshaling := json.Marshal(
 		datastructs.ErrorMessage{
@@ -36,6 +39,7 @@ func CreateErrorMessage(originalMsg []byte, err error) ([]byte, error) {
 	return msgError, nil
 }
 
+// IsMessageValid validates incoming message from kafka(name and surname).
 func IsMessageValid(personData datastructs.PersonData) (bool, error) {
 	var err error
 	if personData.Surname == "" {
