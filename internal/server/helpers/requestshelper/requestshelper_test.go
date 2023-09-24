@@ -8,32 +8,6 @@ import (
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 )
 
-func TestConvertQueryValueIntoString(t *testing.T) {
-	type args struct {
-		value interface{}
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "valid base case",
-			args: args{
-				value: "asdf",
-			},
-			want: "asdf",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := ConvertQueryValueIntoString(tt.args.value); got != tt.want {
-				t.Errorf("ConvertQueryValueIntoString() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestFilterPageNumAndPageSize(t *testing.T) {
 	type args struct {
 		values map[string]interface{}

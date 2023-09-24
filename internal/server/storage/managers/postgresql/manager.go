@@ -233,11 +233,7 @@ func (p *postgresDB) replaceRefValues(ctx context.Context, tx *sql.Tx, values ma
 	errorMessage := "replace reference fields in db: %w"
 	for _, value := range valuesToReplace {
 		if incomingVal, ok := values[value.name]; ok {
-			incomingVal, err := helpers.InterfaceToString(incomingVal)
-			if err != nil {
-				helpers.ExecuteWithLogError(tx.Rollback, p.log)
-				return fmt.Errorf(errorMessage, err)
-			}
+			incomingVal := helpers.InterfaceToString(incomingVal)
 
 			valId, err := p.handler.GetAdditionalId(ctx, tx, incomingVal, value.table)
 			if err != nil {

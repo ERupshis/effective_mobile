@@ -7,8 +7,8 @@ import (
 	"sort"
 
 	"github.com/dgryski/go-farm"
+	"github.com/erupshis/effective_mobile/internal/helpers"
 	"github.com/erupshis/effective_mobile/internal/logger"
-	"github.com/erupshis/effective_mobile/internal/server/helpers/requestshelper"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -129,7 +129,7 @@ func getKeyHash(values map[string]interface{}) string {
 	for _, val := range sortKeys(values) {
 		multiplier := uint64(math.Pow(float64(coef), float64(valueNum)))
 		res += multiplier * farm.Hash64([]byte(val.key))
-		res += multiplier * farm.Hash64([]byte(requestshelper.ConvertQueryValueIntoString(val.value)))
+		res += multiplier * farm.Hash64([]byte(helpers.InterfaceToString(val.value)))
 	}
 
 	sortKeys(values)

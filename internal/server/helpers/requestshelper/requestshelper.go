@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/erupshis/effective_mobile/internal/datastructs"
+	"github.com/erupshis/effective_mobile/internal/helpers"
 )
 
 // FieldsInPersonData slice of available values in query.
@@ -95,7 +96,7 @@ func FilterValues(values map[string]interface{}) map[string]interface{} {
 	res := map[string]interface{}{}
 	for _, fieldName := range FieldsInPersonData {
 		if _, ok := values[fieldName]; ok {
-			res[fieldName] = strings.ToLower(ConvertQueryValueIntoString(values[fieldName]))
+			res[fieldName] = strings.ToLower(helpers.InterfaceToString(values[fieldName]))
 		}
 	}
 	return res
@@ -144,9 +145,4 @@ func convertQueryValueIntoInt64(value interface{}) int64 {
 	}
 
 	return res
-}
-
-// ConvertQueryValueIntoString provides some value into string representation (for interface{} types).
-func ConvertQueryValueIntoString(value interface{}) string {
-	return fmt.Sprintf("%v", value)
 }
