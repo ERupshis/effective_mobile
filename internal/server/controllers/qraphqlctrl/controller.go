@@ -35,7 +35,7 @@ func (c *Controller) Route() *chi.Mux {
 	r := chi.NewRouter()
 	graphHandler, err := c.createHandler()
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:Route] failed to create route: %v", err)
+		c.log.Info("[%s:Controller:Route] failed to create route: %v", packageName, err)
 		r.HandleFunc("/", c.internalErrorHandler)
 		return r
 	}
@@ -118,11 +118,11 @@ func (c *Controller) selectPersonsQuery() *graphql.Field {
 func (c *Controller) selectPersonsResolver(p graphql.ResolveParams) (interface{}, error) {
 	foundPersons, err := c.strg.SelectPersons(p.Context, p.Args)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:selectPersonsResolver] find person failed: %v", err)
+		c.log.Info("[%s:Controller:selectPersonsResolver] find person failed: %v", packageName, err)
 		return nil, fmt.Errorf("find persons failed: %w", err)
 	}
 
-	c.log.Info("["+packageName+":Controller:selectPersonsResolver] some persons were found by request filtering. count: '%d'", len(foundPersons))
+	c.log.Info("[%s:Controller:selectPersonsResolver] some persons were found by request filtering. count: '%d'", packageName, len(foundPersons))
 	return foundPersons, nil
 }
 
@@ -165,12 +165,12 @@ func (c *Controller) insertPersonResolver(p graphql.ResolveParams) (interface{},
 
 	newPersonId, err := c.strg.AddPerson(p.Context, &newPerson)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:insertPersonResolver] create person failed: %w", err)
+		c.log.Info("[%s:Controller:insertPersonResolver] create person failed: %w", packageName, err)
 		return nil, fmt.Errorf("create person failed: %w", err)
 	}
 
 	newPerson.Id = newPersonId
-	c.log.Info("["+packageName+":Controller:insertPersonResolver] person with id '%d' successfully created", newPersonId)
+	c.log.Info("[%s:Controller:insertPersonResolver] person with id '%d' successfully created", packageName, newPersonId)
 	return newPerson, nil
 }
 
@@ -199,11 +199,11 @@ func (c *Controller) updatePersonResolver(p graphql.ResolveParams) (interface{},
 	id, _ := p.Args[argId].(int)
 	updatedPerson, err := c.strg.UpdatePersonById(p.Context, int64(id), p.Args)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:updatePersonResolver] update person failed: %v", err)
+		c.log.Info("[%s:Controller:updatePersonResolver] update person failed: %v", packageName, err)
 		return nil, fmt.Errorf("update person failed: %w", err)
 	}
 
-	c.log.Info("["+packageName+":Controller:updatePersonResolver] person with id '%d' successfully updated", id)
+	c.log.Info("[%s:Controller:updatePersonResolver] person with id '%d' successfully updated", packageName, id)
 	return updatedPerson, nil
 }
 
@@ -225,10 +225,10 @@ func (c *Controller) deletePersonResolver(p graphql.ResolveParams) (interface{},
 	id, _ := p.Args[argId].(int)
 	deletedPerson, err := c.strg.DeletePersonById(p.Context, int64(id))
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:deletePersonResolver] delete person failed: %v", err)
+		c.log.Info("[%s:Controller:deletePersonResolver] delete person failed: %v", packageName, err)
 		return nil, fmt.Errorf("delete person failed: %w", err)
 	}
 
-	c.log.Info("["+packageName+":Controller:deletePersonResolver] person with id '%d' successfully deleted", id)
+	c.log.Info("[%s:Controller:deletePersonResolver] person with id '%d' successfully deleted", packageName, id)
 	return deletedPerson, nil
 }

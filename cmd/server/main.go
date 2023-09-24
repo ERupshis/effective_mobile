@@ -23,17 +23,23 @@ import (
 	"github.com/erupshis/effective_mobile/internal/server/storage/cache/manager"
 	"github.com/erupshis/effective_mobile/internal/server/storage/managers/postgresql"
 	"github.com/go-chi/chi/v5"
+	"github.com/joho/godotenv"
 )
 
-func main() {
-	//config.
-	cfg := config.Parse()
+const envFile = ".env_server"
 
+func main() {
 	//log.
 	log, err := logger.CreateZapLogger("info")
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "failed to create logger: %v", err)
 	}
+
+	//config.
+	if err = godotenv.Load(envFile); err != nil {
+		log.Info("Error loading %s file: %v", envFile, err)
+	}
+	cfg := config.Parse()
 
 	//kafka.
 	brokerReader := msgbroker.CreateKafkaConsumer(cfg.BrokerAddr, cfg.TopicIn, cfg.Group, log)

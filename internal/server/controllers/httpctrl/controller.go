@@ -47,33 +47,33 @@ func (c *Controller) Route() *chi.Mux {
 func (c *Controller) createPersonHandler(w http.ResponseWriter, r *http.Request) {
 	buf := bytes.Buffer{}
 	if _, err := buf.ReadFrom(r.Body); err != nil {
-		c.log.Info("["+packageName+":Controller:createPersonHandler] failed to read request body: %v", err)
+		c.log.Info("[%s:Controller:createPersonHandler] failed to read request body: %v", packageName, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	defer helpers.ExecuteWithLogError(r.Body.Close, c.log)
 
 	if len(buf.Bytes()) == 0 {
-		c.log.Info("[" + packageName + ":Controller:createPersonHandler] empty request's body")
+		c.log.Info("[%s:Controller:createPersonHandler] empty request's body", packageName)
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
 
 	personData, err := requestshelper.ParsePersonDataFromJSON(buf.Bytes())
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:createPersonHandler] failed to parse query params: %v", err)
+		c.log.Info("[%s:Controller:createPersonHandler] failed to parse query params: %v", packageName, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	newPersonId, err := c.strg.AddPerson(r.Context(), personData)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:createPersonHandler] cannot process: %v", err)
+		c.log.Info("[%s:Controller:createPersonHandler] cannot process: %v", packageName, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	c.log.Info("["+packageName+":Controller:createPersonHandler] person with id '%d' successfully added", newPersonId)
+	c.log.Info("[%s:Controller:createPersonHandler] person with id '%d' successfully added", packageName, newPersonId)
 	responseBody := []byte(fmt.Sprintf("Added with id: %d", newPersonId))
 	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
 	w.Header().Add("Content-Type", "text/plain")
@@ -95,12 +95,12 @@ func (c *Controller) deletePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 
 	_, err = c.strg.DeletePersonById(r.Context(), int64(id))
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:deletePersonByIdHandler] delete person: %v", err)
+		c.log.Info("[%s:Controller:deletePersonByIdHandler] delete person: %v", packageName, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	c.log.Info("["+packageName+":Controller:deletePersonByIdHandler] person with id '%d' successfully deleted", id)
+	c.log.Info("[%s:Controller:deletePersonByIdHandler] person with id '%d' successfully deleted", packageName, id)
 	responseBody := []byte("successfully deleted")
 	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
 	w.Header().Add("Content-Type", "text/plain")
@@ -122,7 +122,7 @@ func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 
 	buf := bytes.Buffer{}
 	if _, err := buf.ReadFrom(r.Body); err != nil {
-		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] failed to read request body: %v", err)
+		c.log.Info("[%s:Controller:updatePersonByIdHandler] failed to read request body: %v", packageName, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -131,19 +131,19 @@ func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 	var valuesToUpdate map[string]interface{}
 	err = json.Unmarshal(buf.Bytes(), &valuesToUpdate)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] failed to parse query params: %v", err)
+		c.log.Info("[%s:Controller:updatePersonByIdHandler] failed to parse query params: %v", packageName, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	_, err = c.strg.UpdatePersonById(r.Context(), int64(id), valuesToUpdate)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] cannot process: %v", err)
+		c.log.Info("[%s:Controller:updatePersonByIdHandler] cannot process: %v", packageName, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	c.log.Info("["+packageName+":Controller:updatePersonByIdHandler] person with id '%d' successfully updated", id)
+	c.log.Info("[%s:Controller:updatePersonByIdHandler] person with id '%d' successfully updated", packageName, id)
 	responseBody := []byte(fmt.Sprintf("person with id '%d' updated", id))
 	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
 	w.Header().Add("Content-Type", "text/plain")
@@ -154,21 +154,21 @@ func (c *Controller) selectPersonsByFilterHandler(w http.ResponseWriter, r *http
 	values := r.URL.Query()
 	valuesToFilter, err := requestshelper.ParseQueryValuesIntoMap(values)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:selectPersonsByFilterHandler] cannot process: %v", err)
+		c.log.Info("[%s:Controller:selectPersonsByFilterHandler] cannot process: %v", packageName, err)
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
 
 	personsData, err := c.strg.SelectPersons(r.Context(), valuesToFilter)
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:selectPersonsByFilterHandler] cannot process: %v", err)
+		c.log.Info("[%s:Controller:selectPersonsByFilterHandler] cannot process: %v", packageName, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	var responseBody []byte
 	if responseBody, err = json.MarshalIndent(personsData, "", "\t"); err != nil {
-		c.log.Info("["+packageName+":Controller:selectPersonsByFilterHandler] convert request result into JSON failed: %v", err)
+		c.log.Info("[%s:Controller:selectPersonsByFilterHandler] convert request result into JSON failed: %v", packageName, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

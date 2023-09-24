@@ -52,12 +52,12 @@ func (c *Controller) Run(ctx context.Context) {
 			personData, err := c.handleMessage(msgIn)
 			if err != nil {
 				if err := msghelper.PutErrorMessageInChan(c.chError, &msgIn, "error-in-incoming-msg", err); err != nil {
-					c.log.Info("["+packageName+":Controller:Run] put message in error chan failed: %w", err)
+					c.log.Info("[%s:Controller:Run] put message in error chan failed: %w", packageName, err)
 				}
 				continue
 			}
 
-			c.log.Info("["+packageName+":Controller:handleMessage] person data from msg has been prepared to fill extra data: %v", personData)
+			c.log.Info("[%s:Controller:handleMessage] person data from msg has been prepared to fill extra data: %v", packageName, personData)
 		}
 	}
 }

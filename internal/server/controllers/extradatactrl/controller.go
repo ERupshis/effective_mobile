@@ -60,7 +60,7 @@ func (c *Controller) Run(ctx context.Context) {
 			}
 
 			if c.fillExtraData(ctx, &personDataIn) {
-				c.log.Info("["+packageName+":Controller:Run] person data was filled with extra data: %v", personDataIn.Data)
+				c.log.Info("[%s:Controller:Run] person data was filled with extra data: %v", packageName, personDataIn.Data)
 				c.chOut <- personDataIn
 			}
 		}
@@ -70,7 +70,7 @@ func (c *Controller) Run(ctx context.Context) {
 func (c *Controller) fillExtraData(ctx context.Context, dataIn *datastructs.ExtraDataFilling) bool {
 	for _, service := range remoteServices {
 		if err := c.doRemoteApiRequest(ctx, service, dataIn); err != nil {
-			c.log.Info("["+packageName+":Controller:fillExtraData] request to remote API unsuccessful: %v", err)
+			c.log.Info("[%s:Controller:fillExtraData] request to remote API unsuccessful: %v", packageName, err)
 			return false
 		}
 	}
@@ -81,8 +81,8 @@ func (c *Controller) fillExtraData(ctx context.Context, dataIn *datastructs.Extr
 func (c *Controller) doRemoteApiRequest(ctx context.Context, serviceUrl string, dataIn *datastructs.ExtraDataFilling) error {
 	statusCode, body, err := c.client.DoGetURIWithQuery(ctx, serviceUrl, map[string]string{"name": dataIn.Data.Name})
 	if err != nil {
-		c.log.Info("["+packageName+":Controller:doRemoteApiRequest] failed to get person's age. source: %v statusCode: %d, body: %s, error: %v",
-			dataIn.Data, statusCode, body, err)
+		c.log.Info("[%s:Controller:doRemoteApiRequest] failed to get person's age. source: %v statusCode: %d, body: %s, error: %v",
+			packageName, dataIn.Data, statusCode, body, err)
 	}
 
 	if statusCode != http.StatusOK {
@@ -95,7 +95,7 @@ func (c *Controller) doRemoteApiRequest(ctx context.Context, serviceUrl string, 
 
 		wrappedErr := fmt.Errorf("call remote API '%s' failed: %v", serviceUrl, errAPI.Data)
 		if err = msghelper.PutErrorMessageInChan(c.chError, &dataIn.Raw, "error-remote-api", wrappedErr); err != nil {
-			c.log.Info("["+packageName+":Controller:doRemoteApiRequest] failed to send error message. error: %v", err)
+			c.log.Info("[%s:Controller:doRemoteApiRequest] failed to send error message. error: %v", packageName, err)
 		}
 		return fmt.Errorf("bad remote API response: %w", wrappedErr)
 	}
@@ -105,7 +105,7 @@ func (c *Controller) doRemoteApiRequest(ctx context.Context, serviceUrl string, 
 		countries := datastructs.Countries{}
 		err = json.Unmarshal(body, &countries)
 		if err != nil {
-			c.log.Info("["+packageName+":Controller:doRemoteApiRequest] JSON unmarshaling fail: %v", err)
+			c.log.Info("[%s:Controller:doRemoteApiRequest] JSON unmarshaling fail: %v", packageName, err)
 			return err
 		}
 

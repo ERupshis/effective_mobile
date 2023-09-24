@@ -12,17 +12,24 @@ import (
 	"github.com/erupshis/effective_mobile/internal/helpers"
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
+	"github.com/joho/godotenv"
 )
 
-func main() {
-	//config.
-	cfg := config.Parse()
+const envFile = ".env_agent"
 
+func main() {
 	//log.
 	log, err := logger.CreateZapLogger("info")
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "failed to create logger: %v", err)
 	}
+
+	//config.
+	if err = godotenv.Load(envFile); err != nil {
+		log.Info("Error loading %s file: %v", envFile, err)
+	}
+
+	cfg := config.Parse()
 
 	//kafka.
 	brokerWriter := msgbroker.CreateKafkaProducer(cfg.BrokerAddr, cfg.TopicOut, log)

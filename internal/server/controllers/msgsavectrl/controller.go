@@ -46,12 +46,12 @@ func (c *Controller) Run(ctx context.Context) {
 
 			newPersonId, err := c.strg.AddPerson(ctx, &msgIn.Data)
 			if err != nil {
-				c.log.Info("["+packageName+":Controller:Run] failed to add message in storage: %w", err)
+				c.log.Info("[%s:Controller:Run] failed to add message in storage: %w", packageName, err)
 				continue
 			}
 
 			msgIn.Data.Id = newPersonId
-			c.log.Info("["+packageName+":Controller:Run] person data has been saved in storage: %v", msgIn.Data)
+			c.log.Info("[%s:Controller:Run] person data has been saved in storage: %v", packageName, msgIn.Data)
 		}
 	}
 }
