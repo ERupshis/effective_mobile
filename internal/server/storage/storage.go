@@ -10,20 +10,23 @@ import (
 	"github.com/erupshis/effective_mobile/internal/server/storage/managers"
 )
 
-type Storage struct {
+// storage main storage implementation. Consists of manager and logger.
+type storage struct {
 	manager managers.BaseStorageManager
 
 	log logger.BaseLogger
 }
 
+// Create base create method.
 func Create(manager managers.BaseStorageManager, log logger.BaseLogger) BaseStorage {
-	return &Storage{
+	return &storage{
 		manager: manager,
 		log:     log,
 	}
 }
 
-func (s *Storage) AddPerson(ctx context.Context, newPerson *datastructs.PersonData) (int64, error) {
+// AddPerson adds person in storage. Perform person data validation and reject request if wrong. Returns new person id, otherwise -1.
+func (s *storage) AddPerson(ctx context.Context, newPerson *datastructs.PersonData) (int64, error) {
 	_, err := requestshelper.IsPersonDataValid(newPerson, true)
 	if err != nil {
 		return -1, fmt.Errorf("storage: create: %w", err)
@@ -37,7 +40,9 @@ func (s *Storage) AddPerson(ctx context.Context, newPerson *datastructs.PersonDa
 	return newPersonId, nil
 }
 
-func (s *Storage) SelectPersons(ctx context.Context, values map[string]interface{}) ([]datastructs.PersonData, error) {
+// SelectPersons makes data selection from storage by filters, described in 'values'. Performs filtering 'values' and
+// leave only valid filters for select. Returns array of persons. Also allows to paginate result.
+func (s *storage) SelectPersons(ctx context.Context, values map[string]interface{}) ([]datastructs.PersonData, error) {
 	filters := requestshelper.FilterValues(values)
 
 	if _, ok := values["id"]; ok {
@@ -65,7 +70,9 @@ func (s *Storage) SelectPersons(ctx context.Context, values map[string]interface
 	return selectedPersons, nil
 }
 
-func (s *Storage) DeletePersonById(ctx context.Context, id int64) (*datastructs.PersonData, error) {
+// DeletePersonById removes person from storage by id. Returns removed person data.
+// Before person deleting search then in storage.
+func (s *storage) DeletePersonById(ctx context.Context, id int64) (*datastructs.PersonData, error) {
 	personToDelete, err := s.manager.SelectPersons(ctx, map[string]interface{}{"id": id}, 0, 0)
 	if err != nil {
 		return nil, fmt.Errorf("storage: delete: %w", err)
@@ -83,7 +90,8 @@ func (s *Storage) DeletePersonById(ctx context.Context, id int64) (*datastructs.
 	return &personToDelete[0], nil
 }
 
-func (s *Storage) UpdatePersonById(ctx context.Context, id int64, values map[string]interface{}) (*datastructs.PersonData, error) {
+// UpdatePersonById updates person selected by id. Applies filtering for input filter values. Returns person data.
+func (s *storage) UpdatePersonById(ctx context.Context, id int64, values map[string]interface{}) (*datastructs.PersonData, error) {
 	filteredValues := requestshelper.FilterValues(values)
 	if len(values) == 0 {
 		return nil, fmt.Errorf("storage: update: missing correct filters in request")

@@ -21,9 +21,11 @@ const (
 	CountriesTable = "countries"
 )
 
-var ColumnsInPersonsTable = []string{"name", "surname", "patronymic", "age", "gender_id", "country_id"}
+// columnsInPersonsTable slice of main table attributes in database.
+var columnsInPersonsTable = []string{"name", "surname", "patronymic", "age", "gender_id", "country_id"}
 
-var DatabaseErrorsToRetry = []error{
+// databaseErrorsToRetry errors to retry request to database.
+var databaseErrorsToRetry = []error{
 	errors.New(pgerrcode.UniqueViolation),
 	errors.New(pgerrcode.ConnectionException),
 	errors.New(pgerrcode.ConnectionDoesNotExist),
@@ -34,18 +36,22 @@ var DatabaseErrorsToRetry = []error{
 	errors.New(pgerrcode.ProtocolViolation),
 }
 
-func GetTableFullName(table string) string {
+// getTableFullName support function to return extended database table name.
+func getTableFullName(table string) string {
 	return SchemaName + "." + table
 }
 
+// QueriesHandler support object that implements database's queries and responsible for connection to databse.
 type QueriesHandler struct {
 	log logger.BaseLogger
 }
 
+// CreateHandler creates QueriesHandler.
 func CreateHandler(log logger.BaseLogger) QueriesHandler {
 	return QueriesHandler{log: log}
 }
 
+// InsertPerson performs direct query request to database to add new person.
 func (q *QueriesHandler) InsertPerson(ctx context.Context, tx *sql.Tx, personData *datastructs.PersonData, genderId int64, countryId int64) (int64, error) {
 	errorMsg := fmt.Sprintf("insert person '%v' in '%s'", personData, PersonsTable) + ": %w"
 
@@ -68,7 +74,7 @@ func (q *QueriesHandler) InsertPerson(ctx context.Context, tx *sql.Tx, personDat
 		).Scan(&newPersonId)
 		return err
 	}
-	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
+	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, databaseErrorsToRetry, query)
 	if err != nil {
 		return -1, fmt.Errorf(errorMsg, err)
 	}
@@ -76,20 +82,22 @@ func (q *QueriesHandler) InsertPerson(ctx context.Context, tx *sql.Tx, personDat
 	return newPersonId, nil
 }
 
+// createInsertPersonStmt generates statement for insert query.
 func createInsertPersonStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
-	psqlInsert, _, err := psql.Insert(GetTableFullName(PersonsTable)).
-		Columns(ColumnsInPersonsTable...).
-		Values(make([]interface{}, len(ColumnsInPersonsTable))...).
+	psqlInsert, _, err := psql.Insert(getTableFullName(PersonsTable)).
+		Columns(columnsInPersonsTable...).
+		Values(make([]interface{}, len(columnsInPersonsTable))...).
 		ToSql()
 
 	if err != nil {
-		return nil, fmt.Errorf("squirrel sql insert statement for '"+GetTableFullName(PersonsTable)+"': %w", err)
+		return nil, fmt.Errorf("squirrel sql insert statement for '"+getTableFullName(PersonsTable)+"': %w", err)
 	}
 	return tx.PrepareContext(ctx, psqlInsert+"RETURNING id")
 }
 
+// SelectPersons performs direct query request to database to select persons satisfying filters. Supports pagination.
 func (q *QueriesHandler) SelectPersons(ctx context.Context, tx *sql.Tx, filters map[string]interface{}, pageNum int64, pageSize int64) ([]datastructs.PersonData, error) {
 	errorMsg := fmt.Sprintf("select persons with filter '%v' in '%s'", filters, PersonsTable) + ": %w"
 
@@ -112,7 +120,7 @@ func (q *QueriesHandler) SelectPersons(ctx context.Context, tx *sql.Tx, filters 
 		)
 		return err
 	}
-	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
+	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, databaseErrorsToRetry, query)
 	if err != nil {
 		return nil, fmt.Errorf(errorMsg, err)
 	}
@@ -140,42 +148,45 @@ func (q *QueriesHandler) SelectPersons(ctx context.Context, tx *sql.Tx, filters 
 	return res, nil
 }
 
+// convertToInitCap postgres aggregation func wrapper.
 func convertToInitCap(val string) string {
 	return "INITCAP(" + val + ")"
 }
 
+// convertToUpper postgres aggregation func wrapper.
 func convertToUpper(val string) string {
 	return "UPPER(" + val + ")"
 }
 
+// createSelectPersonsStmt generates statement for select query.
 func createSelectPersonsStmt(ctx context.Context, tx *sql.Tx, filters map[string]interface{}, pageNum int64, pageSize int64) (*sql.Stmt, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
-	gendersJoin := fmt.Sprintf("LEFT JOIN %s ON %[1]s.id = %s.gender_id", GetTableFullName(GendersTable), GetTableFullName(PersonsTable))
-	countriesJoin := fmt.Sprintf("LEFT JOIN %s ON %[1]s.id = %s.country_id", GetTableFullName(CountriesTable), GetTableFullName(PersonsTable))
+	gendersJoin := fmt.Sprintf("LEFT JOIN %s ON %[1]s.id = %s.gender_id", getTableFullName(GendersTable), getTableFullName(PersonsTable))
+	countriesJoin := fmt.Sprintf("LEFT JOIN %s ON %[1]s.id = %s.country_id", getTableFullName(CountriesTable), getTableFullName(PersonsTable))
 	builder := psql.Select(
-		GetTableFullName(PersonsTable)+".id",
-		convertToInitCap(GetTableFullName(PersonsTable)+".name"),
+		getTableFullName(PersonsTable)+".id",
+		convertToInitCap(getTableFullName(PersonsTable)+".name"),
 		convertToInitCap("surname"),
 		convertToInitCap("patronymic"),
 		"age",
-		GetTableFullName(GendersTable)+".name",
-		convertToUpper(GetTableFullName(CountriesTable)+".name"),
+		getTableFullName(GendersTable)+".name",
+		convertToUpper(getTableFullName(CountriesTable)+".name"),
 	).
-		From(GetTableFullName(PersonsTable)).
+		From(getTableFullName(PersonsTable)).
 		JoinClause(gendersJoin).
 		JoinClause(countriesJoin)
 	if len(filters) != 0 {
 		for key := range filters {
 			switch key {
 			case "id":
-				key = GetTableFullName(PersonsTable) + ".id"
+				key = getTableFullName(PersonsTable) + ".id"
 			case "name":
-				key = GetTableFullName(PersonsTable) + ".name"
+				key = getTableFullName(PersonsTable) + ".name"
 			case "gender":
-				key = GetTableFullName(GendersTable) + ".name"
+				key = getTableFullName(GendersTable) + ".name"
 			case "country":
-				key = GetTableFullName(CountriesTable) + ".name"
+				key = getTableFullName(CountriesTable) + ".name"
 			}
 			builder = builder.Where(sq.Eq{key: "?"})
 		}
@@ -189,11 +200,12 @@ func createSelectPersonsStmt(ctx context.Context, tx *sql.Tx, filters map[string
 	psqlSelect, _, err := builder.ToSql()
 
 	if err != nil {
-		return nil, fmt.Errorf("squirrel sql select statement for '"+GetTableFullName(PersonsTable)+"': %w", err)
+		return nil, fmt.Errorf("squirrel sql select statement for '"+getTableFullName(PersonsTable)+"': %w", err)
 	}
 	return tx.PrepareContext(ctx, psqlSelect)
 }
 
+// DeletePerson performs direct query request to database to delete person by id.
 func (q *QueriesHandler) DeletePerson(ctx context.Context, tx *sql.Tx, id int64) (int64, error) {
 	errorMsg := fmt.Sprintf("delete person by id '%v' in '%s", id, PersonsTable) + ": %w"
 
@@ -208,7 +220,7 @@ func (q *QueriesHandler) DeletePerson(ctx context.Context, tx *sql.Tx, id int64)
 		result, err = stmt.ExecContext(context, id)
 		return err
 	}
-	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
+	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, databaseErrorsToRetry, query)
 	if err != nil {
 		return 0, fmt.Errorf(errorMsg, err)
 	}
@@ -221,59 +233,22 @@ func (q *QueriesHandler) DeletePerson(ctx context.Context, tx *sql.Tx, id int64)
 	return count, nil
 }
 
+// createDeletePersonStmt generates statement for delete query.
 func createDeletePersonStmt(ctx context.Context, tx *sql.Tx) (*sql.Stmt, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
-	psqlInsert, _, err := psql.Delete(GetTableFullName(PersonsTable)).
+	psqlInsert, _, err := psql.Delete(getTableFullName(PersonsTable)).
 		Where(sq.Eq{"id": "?"}).
 		ToSql()
 
 	if err != nil {
-		return nil, fmt.Errorf("squirrel sql delete statement for '"+GetTableFullName(PersonsTable)+"': %w", err)
+		return nil, fmt.Errorf("squirrel sql delete statement for '"+getTableFullName(PersonsTable)+"': %w", err)
 
 	}
 	return tx.PrepareContext(ctx, psqlInsert)
 }
 
-func (q *QueriesHandler) UpdatePersonById(ctx context.Context, tx *sql.Tx, id int64, personData *datastructs.PersonData, genderId int64, countryId int64) (int64, error) {
-	errorMsg := fmt.Sprintf("update person by id '%d' with data '%v' in '%s'", id, personData, PersonsTable) + ": %w"
-
-	var columnsToUpdate []string
-	columnsToUpdate = append(columnsToUpdate, ColumnsInPersonsTable...)
-
-	stmt, err := createUpdatePersonByIdStmt(ctx, tx, columnsToUpdate)
-	if err != nil {
-		return 0, fmt.Errorf(errorMsg, err)
-	}
-	defer helpers.ExecuteWithLogError(stmt.Close, q.log)
-
-	var result sql.Result
-	query := func(context context.Context) error {
-		result, err = stmt.ExecContext(
-			context,
-			personData.Name,
-			personData.Surname,
-			personData.Patronymic,
-			personData.Age,
-			genderId,
-			countryId,
-			id,
-		)
-		return err
-	}
-	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
-	if err != nil {
-		return 0, fmt.Errorf(errorMsg, err)
-	}
-
-	count, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf(errorMsg, err)
-	}
-
-	return count, nil
-}
-
+// UpdatePartialPersonById generates statement for delete query.
 func (q *QueriesHandler) UpdatePartialPersonById(ctx context.Context, tx *sql.Tx, id int64, values map[string]interface{}) (int64, error) {
 	errorMsg := fmt.Sprintf("update partially person by id '%d' with data '%v' in '%s'", id, values, PersonsTable) + ": %w"
 
@@ -299,7 +274,7 @@ func (q *QueriesHandler) UpdatePartialPersonById(ctx context.Context, tx *sql.Tx
 		)
 		return err
 	}
-	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
+	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, databaseErrorsToRetry, query)
 	if err != nil {
 		return 0, fmt.Errorf(errorMsg, err)
 	}
@@ -312,10 +287,11 @@ func (q *QueriesHandler) UpdatePartialPersonById(ctx context.Context, tx *sql.Tx
 	return count, nil
 }
 
+// createUpdatePersonByIdStmt generates statement for update query.
 func createUpdatePersonByIdStmt(ctx context.Context, tx *sql.Tx, values []string) (*sql.Stmt, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
-	builder := psql.Update(GetTableFullName(PersonsTable))
+	builder := psql.Update(getTableFullName(PersonsTable))
 	for _, col := range values {
 		builder = builder.Set(col, "?")
 	}
@@ -323,12 +299,13 @@ func createUpdatePersonByIdStmt(ctx context.Context, tx *sql.Tx, values []string
 	psqlUpdate, _, err := builder.ToSql()
 
 	if err != nil {
-		return nil, fmt.Errorf("squirrel sql update statement for '"+GetTableFullName(PersonsTable)+"': %w", err)
+		return nil, fmt.Errorf("squirrel sql update statement for '"+getTableFullName(PersonsTable)+"': %w", err)
 
 	}
 	return tx.PrepareContext(ctx, psqlUpdate)
 }
 
+// GetAdditionalId returns foreign key from linked table.
 func (q *QueriesHandler) GetAdditionalId(ctx context.Context, tx *sql.Tx, name string, table string) (int64, error) {
 	errorMsg := fmt.Sprintf("get additional id for '%s' in '%s'", name, table) + ": %w"
 
@@ -342,7 +319,7 @@ func (q *QueriesHandler) GetAdditionalId(ctx context.Context, tx *sql.Tx, name s
 	query := func(context context.Context) error {
 		return stmt.QueryRowContext(ctx, name).Scan(&id)
 	}
-	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
+	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, databaseErrorsToRetry, query)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			id, err = q.InsertAdditionalId(ctx, tx, name, table)
@@ -357,21 +334,23 @@ func (q *QueriesHandler) GetAdditionalId(ctx context.Context, tx *sql.Tx, name s
 	return id, nil
 }
 
+// createSelectAdditionalIdStmt generates statement for get foreign key id.
 func createSelectAdditionalIdStmt(ctx context.Context, tx *sql.Tx, name string, table string) (*sql.Stmt, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
 	psqlSelect, _, err := psql.Select("id").
-		From(GetTableFullName(table)).
+		From(getTableFullName(table)).
 		Where(sq.Eq{"name": name}).
 		ToSql()
 
 	if err != nil {
-		return nil, fmt.Errorf("squirrel sql select statement for '"+GetTableFullName(table)+"': %w", err)
+		return nil, fmt.Errorf("squirrel sql select statement for '"+getTableFullName(table)+"': %w", err)
 
 	}
 	return tx.PrepareContext(ctx, psqlSelect)
 }
 
+// InsertAdditionalId adds new value forl linked table and returns foreign key from linked table.
 func (q *QueriesHandler) InsertAdditionalId(ctx context.Context, tx *sql.Tx, name string, table string) (int64, error) {
 	errorMsg := fmt.Sprintf("insert additional value for '%s' in '%s'", name, table) + ": %w"
 
@@ -385,7 +364,7 @@ func (q *QueriesHandler) InsertAdditionalId(ctx context.Context, tx *sql.Tx, nam
 	query := func(context context.Context) error {
 		return stmt.QueryRowContext(ctx, name).Scan(&id)
 	}
-	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, DatabaseErrorsToRetry, query)
+	err = retryer.RetryCallWithTimeoutErrorOnly(ctx, q.log, []int{1, 1, 3}, databaseErrorsToRetry, query)
 	if err != nil {
 		return 0, fmt.Errorf(errorMsg, err)
 	}
@@ -393,16 +372,17 @@ func (q *QueriesHandler) InsertAdditionalId(ctx context.Context, tx *sql.Tx, nam
 	return id, nil
 }
 
+// createInsertAdditionalIdStmt generates statement for add and then get foreign key id.
 func createInsertAdditionalIdStmt(ctx context.Context, tx *sql.Tx, name string, table string) (*sql.Stmt, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
-	psqlInsert, _, err := psql.Insert(GetTableFullName(table)).
+	psqlInsert, _, err := psql.Insert(getTableFullName(table)).
 		Columns("name").
 		Values(name).
 		ToSql()
 
 	if err != nil {
-		return nil, fmt.Errorf("squirrel sql insert statement for '"+GetTableFullName(table)+"': %w", err)
+		return nil, fmt.Errorf("squirrel sql insert statement for '"+getTableFullName(table)+"': %w", err)
 
 	}
 	return tx.PrepareContext(ctx, psqlInsert+"RETURNING id")

@@ -1,3 +1,4 @@
+// Package cache implements cache for storage.BaseStorage.
 package cache
 
 import (
@@ -12,44 +13,48 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Cache struct {
+// cache decoration class for storage.BaseStorage.
+type cache struct {
 	manager manager.BaseCacheManager
 	storage storage.BaseStorage
 
 	logger logger.BaseLogger
 }
 
+// Create creates cache-cover for storage.BaseStorage.
 func Create(cacheManager manager.BaseCacheManager, baseStorage storage.BaseStorage, logger logger.BaseLogger) storage.BaseStorage {
-	return &Cache{
+	return &cache{
 		manager: cacheManager,
 		storage: baseStorage,
 		logger:  logger,
 	}
 }
 
-func (c *Cache) AddPerson(ctx context.Context, data *datastructs.PersonData) (int64, error) {
+// AddPerson adds person in storage.
+func (c *cache) AddPerson(ctx context.Context, data *datastructs.PersonData) (int64, error) {
 	res, err := c.storage.AddPerson(ctx, data)
 	if err == nil {
 		if err = c.manager.Flush(ctx); err != nil {
-			c.logger.Info("[Cache:AddPerson] failed to flush cache %v", err)
+			c.logger.Info("[cache:AddPerson] failed to flush cache %v", err)
 		}
 	}
 
 	return res, err
 }
 
-func (c *Cache) SelectPersons(ctx context.Context, filters map[string]interface{}) ([]datastructs.PersonData, error) {
+// SelectPersons seeks and returns persons satisfying to filter.
+func (c *cache) SelectPersons(ctx context.Context, filters map[string]interface{}) ([]datastructs.PersonData, error) {
 	var res []datastructs.PersonData
 
 	cachedVal, err := c.manager.Get(ctx, filters)
 	if err != nil {
 		if !errors.Is(err, redis.Nil) {
-			c.logger.Info("[Cache:SelectPersons] failed to get cacheValue with key: %v, error: %v", filters, err)
+			c.logger.Info("[cache:SelectPersons] failed to get cacheValue with key: %v, error: %v", filters, err)
 		}
 	} else {
 		err = json.Unmarshal(cachedVal, &res)
 		if err == nil {
-			c.logger.Info("[Cache:SelectPersons] restored value from cache")
+			c.logger.Info("[cache:SelectPersons] restored value from cache")
 			return res, nil
 		}
 	}
@@ -58,11 +63,11 @@ func (c *Cache) SelectPersons(ctx context.Context, filters map[string]interface{
 	if err == nil {
 		jsonRes, err := json.Marshal(res)
 		if err != nil {
-			c.logger.Info("[Cache:SelectPersons] failed to generate json result representation for storing: %v, error: %v", filters, err)
+			c.logger.Info("[cache:SelectPersons] failed to generate json result representation for storing: %v, error: %v", filters, err)
 		} else {
 			err = c.manager.Add(ctx, filters, jsonRes)
 			if err != nil {
-				c.logger.Info("[Cache:SelectPersons] failed to add value in cache, value: %v, error: %v", jsonRes, err)
+				c.logger.Info("[cache:SelectPersons] failed to add value in cache, value: %v, error: %v", jsonRes, err)
 			}
 		}
 	}
@@ -70,22 +75,24 @@ func (c *Cache) SelectPersons(ctx context.Context, filters map[string]interface{
 	return res, err
 }
 
-func (c *Cache) DeletePersonById(ctx context.Context, id int64) (*datastructs.PersonData, error) {
+// DeletePersonById deletes person from storage by id.
+func (c *cache) DeletePersonById(ctx context.Context, id int64) (*datastructs.PersonData, error) {
 	res, err := c.storage.DeletePersonById(ctx, id)
 	if err == nil {
 		if err = c.manager.Flush(ctx); err != nil {
-			c.logger.Info("[Cache:DeletePersonById] failed to flush cache %v", err)
+			c.logger.Info("[cache:DeletePersonById] failed to flush cache %v", err)
 		}
 	}
 
 	return res, err
 }
 
-func (c *Cache) UpdatePersonById(ctx context.Context, id int64, values map[string]interface{}) (*datastructs.PersonData, error) {
+// UpdatePersonById updates person data in storage by id.
+func (c *cache) UpdatePersonById(ctx context.Context, id int64, values map[string]interface{}) (*datastructs.PersonData, error) {
 	res, err := c.storage.UpdatePersonById(ctx, id, values)
 	if err == nil {
 		if err = c.manager.Flush(ctx); err != nil {
-			c.logger.Info("[Cache:UpdatePersonById] failed to flush cache %v", err)
+			c.logger.Info("[cache:UpdatePersonById] failed to flush cache %v", err)
 		}
 	}
 

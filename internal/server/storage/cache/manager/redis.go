@@ -12,12 +12,14 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-type Redis struct {
+// redisImpl cache implementation based on Redis.
+type redisImpl struct {
 	client *redis.Client
 
 	log logger.BaseLogger
 }
 
+// CreateRedis creates connection to and checks it.
 func CreateRedis(ctx context.Context, dsn string, log logger.BaseLogger) (BaseCacheManager, error) {
 	log.Info("[CreateRedis] open redis with settings: '%v'", dsn)
 
@@ -28,7 +30,7 @@ func CreateRedis(ctx context.Context, dsn string, log logger.BaseLogger) (BaseCa
 
 	client := redis.NewClient(opts)
 
-	redisImpl := &Redis{
+	redisImpl := &redisImpl{
 		client: client,
 		log:    log,
 	}
@@ -46,7 +48,8 @@ func CreateRedis(ctx context.Context, dsn string, log logger.BaseLogger) (BaseCa
 	return redisImpl, nil
 }
 
-func (r *Redis) CheckConnection(ctx context.Context) (bool, error) {
+// CheckConnection check connection to database.
+func (r *redisImpl) CheckConnection(ctx context.Context) (bool, error) {
 	key := map[string]interface{}{"connection_check": ""}
 	err := r.Add(ctx, key, "")
 	if err != nil {
@@ -62,11 +65,13 @@ func (r *Redis) CheckConnection(ctx context.Context) (bool, error) {
 	return exists, nil
 }
 
-func (r *Redis) Close() error {
+// Close closes connection to database.
+func (r *redisImpl) Close() error {
 	return r.client.Close()
 }
 
-func (r *Redis) Add(ctx context.Context, key map[string]interface{}, val interface{}) error {
+// Add adds new key/value pair in database.
+func (r *redisImpl) Add(ctx context.Context, key map[string]interface{}, val interface{}) error {
 	err := r.client.Set(ctx, getKeyHash(key), val, 0).Err()
 	if err != nil {
 		return fmt.Errorf("redis add record: %w", err)
@@ -75,7 +80,8 @@ func (r *Redis) Add(ctx context.Context, key map[string]interface{}, val interfa
 	return nil
 }
 
-func (r *Redis) Has(ctx context.Context, key map[string]interface{}) (bool, error) {
+// Has checks if key exists in redis database.
+func (r *redisImpl) Has(ctx context.Context, key map[string]interface{}) (bool, error) {
 	_, err := r.client.Get(ctx, getKeyHash(key)).Result()
 	if err == redis.Nil {
 		return false, nil
@@ -85,7 +91,8 @@ func (r *Redis) Has(ctx context.Context, key map[string]interface{}) (bool, erro
 	return true, nil
 }
 
-func (r *Redis) Get(ctx context.Context, key map[string]interface{}) ([]byte, error) {
+// Get return value that belongs to key in database.
+func (r *redisImpl) Get(ctx context.Context, key map[string]interface{}) ([]byte, error) {
 	val, err := r.client.Get(ctx, getKeyHash(key)).Result()
 	if err == redis.Nil {
 		return []byte{}, fmt.Errorf("missing record in redis: %w", err)
@@ -96,21 +103,24 @@ func (r *Redis) Get(ctx context.Context, key map[string]interface{}) ([]byte, er
 	}
 }
 
-func (r *Redis) Flush(ctx context.Context) error {
+// Flush clean database.
+func (r *redisImpl) Flush(ctx context.Context) error {
 	_, err := r.client.FlushDB(ctx).Result()
 	if err != nil {
 		return fmt.Errorf("redis flush: %w", err)
 	}
 
-	r.log.Info("[Redis:Flush] successful")
+	r.log.Info("[redisImpl:Flush] successful")
 	return nil
 }
 
-type KeyVal struct {
+// keyVal key-value struct to create hash from multiple structs objects.
+type keyVal struct {
 	key   string
 	value interface{}
 }
 
+// getKeyHash calculates hash for main storage.BaseStorage filters
 func getKeyHash(values map[string]interface{}) string {
 	coef := 37
 	valueNum := 0
@@ -126,10 +136,11 @@ func getKeyHash(values map[string]interface{}) string {
 	return fmt.Sprintf("%x", res)
 }
 
-func sortKeys(values map[string]interface{}) []KeyVal {
-	var res []KeyVal
+// sortKeys sorts keyVal slice for correct hashing.
+func sortKeys(values map[string]interface{}) []keyVal {
+	var res []keyVal
 	for k, v := range values {
-		res = append(res, KeyVal{key: k, value: v})
+		res = append(res, keyVal{key: k, value: v})
 	}
 
 	sort.Slice(res, func(i, j int) bool { return res[i].key < res[j].key })
