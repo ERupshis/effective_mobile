@@ -46,7 +46,7 @@ func checkFlags(config *Config) {
 // ENVIRONMENTS PARSING.
 type envConfig struct {
 	BrokerAddr string `env:"BROKERS"`
-	TopicIn    string `env:"TOPIC_IN"`
+	TopicError string `env:"TOPIC_ERROR"`
 	TopicOut   string `env:"TOPIC_OUT"`
 	Group      string `env:"GROUP"`
 }
@@ -59,7 +59,7 @@ func checkEnvironments(config *Config) {
 	}
 
 	confighelper.SetEnvToParamIfNeed(&config.BrokerAddr, envs.BrokerAddr)
-	confighelper.SetEnvToParamIfNeed(&config.TopicIn, envs.TopicIn)
+	confighelper.SetEnvToParamIfNeed(&config.TopicIn, envs.TopicError)
 	confighelper.SetEnvToParamIfNeed(&config.TopicOut, envs.TopicOut)
 	confighelper.SetEnvToParamIfNeed(&config.Group, envs.Group)
 }
