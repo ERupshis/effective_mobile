@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/erupshis/effective_mobile/internal/datastructs"
 )
@@ -24,7 +25,7 @@ func ParseQueryValuesIntoMap(values url.Values) (map[string]interface{}, error) 
 	res := map[string]interface{}{}
 	for _, fieldName := range FieldsInPersonData {
 		if values.Has(fieldName) {
-			res[fieldName] = values.Get(fieldName)
+			res[fieldName] = strings.ToLower(values.Get(fieldName))
 			values.Del(fieldName)
 		}
 	}
@@ -37,11 +38,55 @@ func ParseQueryValuesIntoMap(values url.Values) (map[string]interface{}, error) 
 	return res, err
 }
 
+func IsPersonDataValid(data *datastructs.PersonData, allFieldsToCheck bool) (bool, error) {
+	errorCriticalMessage := ""
+	errorNonCriticalMessage := ""
+
+	data.Name = strings.ToLower(data.Name)
+	if data.Name == "" {
+		errorCriticalMessage += " name"
+	}
+
+	data.Surname = strings.ToLower(data.Surname)
+	if data.Surname == "" {
+		errorCriticalMessage += " surname"
+	}
+
+	data.Patronymic = strings.ToLower(data.Patronymic)
+
+	if allFieldsToCheck {
+		if data.Age <= 0 {
+			errorNonCriticalMessage += " age"
+		}
+
+		data.Gender = strings.ToLower(data.Gender)
+		if data.Gender == "" {
+			errorNonCriticalMessage += " gender"
+		}
+
+		data.Country = strings.ToLower(data.Country)
+		if data.Country == "" {
+			errorNonCriticalMessage += " country"
+		}
+	}
+
+	allFieldsEmpty := data.Name == "" && data.Surname == "" && data.Gender == "" && data.Country == "" && data.Age <= 0
+	if allFieldsEmpty {
+		return false, fmt.Errorf("all person data fields empty")
+	}
+
+	if allFieldsToCheck && (errorCriticalMessage != "" || errorNonCriticalMessage != "") {
+		return false, fmt.Errorf("person data is not valid: %s", errorCriticalMessage+errorNonCriticalMessage)
+	}
+
+	return true, nil
+}
+
 func FilterValues(values map[string]interface{}) map[string]interface{} {
 	res := map[string]interface{}{}
 	for _, fieldName := range FieldsInPersonData {
 		if _, ok := values[fieldName]; ok {
-			res[fieldName] = values[fieldName]
+			res[fieldName] = strings.ToLower(ConvertQueryValueIntoString(values[fieldName]))
 		}
 	}
 	return res
@@ -83,39 +128,6 @@ func convertQueryValueIntoInt64(value interface{}) int64 {
 	return res
 }
 
-func IsPersonDataValid(data *datastructs.PersonData, allFieldsToCheck bool) (bool, error) {
-	errorCriticalMessage := ""
-	errorNonCriticalMessage := ""
-
-	if data.Name == "" {
-		errorCriticalMessage += " name"
-	}
-
-	if data.Surname == "" {
-		errorCriticalMessage += " surname"
-	}
-
-	if allFieldsToCheck {
-		if data.Age <= 0 {
-			errorNonCriticalMessage += " age"
-		}
-
-		if data.Gender == "" {
-			errorNonCriticalMessage += " gender"
-		}
-		if data.Country == "" {
-			errorNonCriticalMessage += " country"
-		}
-	}
-
-	allFieldsEmpty := data.Name == "" && data.Surname == "" && data.Gender == "" && data.Country == "" && data.Age <= 0
-	if allFieldsEmpty {
-		return false, fmt.Errorf("all person data fields empty")
-	}
-
-	if allFieldsToCheck && (errorCriticalMessage != "" || errorNonCriticalMessage != "") {
-		return false, fmt.Errorf("person data is not valid: %s", errorCriticalMessage+errorNonCriticalMessage)
-	}
-
-	return true, nil
+func ConvertQueryValueIntoString(value interface{}) string {
+	return fmt.Sprintf("%v", value)
 }

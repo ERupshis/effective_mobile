@@ -140,6 +140,14 @@ func (q *QueriesHandler) SelectPersons(ctx context.Context, tx *sql.Tx, filters 
 	return res, nil
 }
 
+func convertToInitCap(val string) string {
+	return "INITCAP(" + val + ")"
+}
+
+func convertToUpper(val string) string {
+	return "UPPER(" + val + ")"
+}
+
 func createSelectPersonsStmt(ctx context.Context, tx *sql.Tx, filters map[string]interface{}, pageNum int64, pageSize int64) (*sql.Stmt, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
@@ -147,12 +155,12 @@ func createSelectPersonsStmt(ctx context.Context, tx *sql.Tx, filters map[string
 	countriesJoin := fmt.Sprintf("LEFT JOIN %s ON %[1]s.id = %s.country_id", GetTableFullName(CountriesTable), GetTableFullName(PersonsTable))
 	builder := psql.Select(
 		GetTableFullName(PersonsTable)+".id",
-		GetTableFullName(PersonsTable)+".name",
-		"surname",
-		"patronymic",
+		convertToInitCap(GetTableFullName(PersonsTable)+".name"),
+		convertToInitCap("surname"),
+		convertToInitCap("patronymic"),
 		"age",
 		GetTableFullName(GendersTable)+".name",
-		GetTableFullName(CountriesTable)+".name",
+		convertToUpper(GetTableFullName(CountriesTable)+".name"),
 	).
 		From(GetTableFullName(PersonsTable)).
 		JoinClause(gendersJoin).

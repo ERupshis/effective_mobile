@@ -14,6 +14,12 @@ func SetEnvToParamIfNeed(param interface{}, val string) {
 	}
 
 	switch param := param.(type) {
+	case *int:
+		if envVal, err := strconv.Atoi(val); err == nil {
+			*param = envVal
+		} else {
+			panic(err)
+		}
 	case *int64:
 		if envVal, err := Atoi64(val); err == nil {
 			*param = envVal

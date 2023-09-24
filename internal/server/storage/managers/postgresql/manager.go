@@ -29,7 +29,7 @@ type postgresDB struct {
 }
 
 func CreatePostgreDB(ctx context.Context, cfg config.Config, queriesHandler QueriesHandler, log logger.BaseLogger) (managers.BaseStorageManager, error) {
-	log.Info("[storage:CreatePostgreDB] open database with settings: '%s'", cfg.DatabaseDSN)
+	log.Info("[CreatePostgreDB] open database with settings: '%s'", cfg.DatabaseDSN)
 	createDatabaseError := "create db: %w"
 	database, err := sql.Open("pgx", cfg.DatabaseDSN)
 	if err != nil {
@@ -61,7 +61,7 @@ func CreatePostgreDB(ctx context.Context, cfg config.Config, queriesHandler Quer
 		return nil, fmt.Errorf(createDatabaseError, err)
 	}
 
-	log.Info("[storage:CreatePostgreDB] successful")
+	log.Info("[CreatePostgreDB] successful")
 	return manager, nil
 }
 
