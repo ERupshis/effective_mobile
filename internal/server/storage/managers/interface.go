@@ -8,6 +8,8 @@ import (
 )
 
 // BaseStorageManager interface of storage manager that performs main work.
+//
+//go:generate mockgen -destination=../../../../mocks/mock_BaseStorageManager.go -package=mocks github.com/erupshis/effective_mobile/internal/server/storage/managers BaseStorageManager
 type BaseStorageManager interface {
 	// AddPerson adds person in storage.
 	AddPerson(ctx context.Context, data *datastructs.PersonData) (int64, error)
