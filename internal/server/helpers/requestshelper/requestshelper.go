@@ -82,7 +82,7 @@ func IsPersonDataValid(data *datastructs.PersonData, allFieldsToCheck bool) (boo
 		return false, fmt.Errorf("all person data fields empty")
 	}
 
-	if allFieldsToCheck && (errorCriticalMessage != "" || errorNonCriticalMessage != "") {
+	if errorCriticalMessage != "" || (allFieldsToCheck && errorNonCriticalMessage != "") {
 		return false, fmt.Errorf("person data is not valid: %s", errorCriticalMessage+errorNonCriticalMessage)
 	}
 
@@ -126,11 +126,18 @@ func convertQueryValueIntoInt64(value interface{}) int64 {
 	case string:
 		intVal, err := strconv.Atoi(param)
 		if err != nil {
-			res = 0
-		} else {
-			res = int64(intVal)
+			floatVal, err := strconv.ParseFloat(param, 64)
+			if err != nil {
+				res = 0
+			} else {
+				res = int64(floatVal)
+			}
+			break
 		}
+		res = int64(intVal)
 	case int:
+		res = int64(param)
+	case float64:
 		res = int64(param)
 	default:
 		res = 0

@@ -11,6 +11,14 @@ import (
 
 // PutErrorMessageInChan creates error message for kafka with message key and body and puts it in channel for sending into kafka's topic.
 func PutErrorMessageInChan(chError chan<- msgbroker.Message, msg *msgbroker.Message, errMsgKey string, err error) error {
+	if chError == nil {
+		return fmt.Errorf("channel is nil")
+	}
+
+	if msg == nil {
+		return fmt.Errorf("msg is nil")
+	}
+
 	msgErr, err := CreateErrorMessage(msg.Value, err)
 	if err != nil {
 		return fmt.Errorf("create error message: %w", err)
@@ -26,6 +34,10 @@ func PutErrorMessageInChan(chError chan<- msgbroker.Message, msg *msgbroker.Mess
 
 // CreateErrorMessage creates error message for kafka.
 func CreateErrorMessage(originalMsg []byte, err error) ([]byte, error) {
+	if err == nil {
+		return []byte{}, fmt.Errorf("error is nil")
+	}
+
 	msgError, errMarshaling := json.Marshal(
 		datastructs.ErrorMessage{
 			OriginalMessage: string(originalMsg),
