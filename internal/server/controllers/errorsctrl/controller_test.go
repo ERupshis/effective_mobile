@@ -85,7 +85,7 @@ func TestController_RunStoppedFanInByChannelsClose(t *testing.T) {
 				log:     log,
 			}
 
-			ctxWithCancel, _ := context.WithCancel(tt.args.ctx)
+			ctxWithCancel, cancel := context.WithCancel(tt.args.ctx)
 			go c.Run(ctxWithCancel)
 
 			ch1 <- msgbroker.Message{}
@@ -100,6 +100,7 @@ func TestController_RunStoppedFanInByChannelsClose(t *testing.T) {
 			go func() {
 				time.Sleep(time.Second)
 				waitChecks <- struct{}{}
+				cancel()
 			}()
 
 			<-waitChecks
