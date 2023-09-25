@@ -1,3 +1,4 @@
+// Package retryer implements repeat requests logic.
 package retryer
 
 import (
@@ -8,13 +9,21 @@ import (
 	"github.com/erupshis/effective_mobile/internal/logger"
 )
 
+// defIntervals default intervals for repeats.
 var defIntervals = []int{1, 3, 5}
 
+// ctxStruct protector from early ctx breakdown.
 type ctxStruct struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 }
 
+// RetryCallWithTimeout generates repeats of function call if error occurs.
+// Args:
+//   - ctx(context.Context), log Logger.BaseLogger,
+//   - intervals([]int) - count of repeats and pause between them (secs.);
+//   - repeatableErrors([]error) - errors - reasons to make repeat call. If empty - any error is signal to repeat call;
+//   - callback(func(context.Context) (int64, []byte, error)) - function to call.
 func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals []int, repeatableErrors []error,
 	callback func(context.Context) (int64, []byte, error)) (int64, []byte, error) {
 	var status int64
@@ -64,6 +73,12 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 	return status, body, err
 }
 
+// RetryCallWithTimeoutErrorOnly generates repeats of function call if error occurs.
+// Args:
+//   - ctx(context.Context), log Logger.BaseLogger,
+//   - intervals([]int) - count of repeats and pause between them (secs.);
+//   - repeatableErrors([]error) - errors - reasons to make repeat call. If empty - any error is signal to repeat call;
+//   - callback (func(context.Context) error) - function to call.
 func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, intervals []int, repeatableErrors []error,
 	callback func(context.Context) error) error {
 	var err error
@@ -113,6 +128,7 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 	return err
 }
 
+// canRetryCall checks if generated error is in list of repeatableErrors.
 func canRetryCall(err error, repeatableErrors []error) bool {
 	if repeatableErrors == nil {
 		return true
