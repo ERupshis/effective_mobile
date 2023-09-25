@@ -14,8 +14,8 @@ for package in $(go list ./...); do
     # Create a directory for the package's documentation
     mkdir -p "documentation/$package_name"
 
-    # Generate the documentation content using go doc and redirect to the Markdown file
-    go doc "$package" > "documentation/$package_name/documentation.md"
+    # Generate the documentation content using go doc with the -all flag and redirect to the Markdown file
+    go doc -all "$package" > "documentation/$package_name/documentation.md"
 done
 
 # Check if any Markdown documentation files were generated

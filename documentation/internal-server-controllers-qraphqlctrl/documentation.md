@@ -2,5 +2,15 @@ package qraphqlctrl // import "github.com/erupshis/effective_mobile/internal/ser
 
 Package qraphqlctrl provides GraphQL handling.
 
-type Controller struct{ ... }
-    func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller
+TYPES
+
+type Controller struct {
+	// Has unexported fields.
+}
+
+func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller
+    Create returns controller.
+
+func (c *Controller) Route() *chi.Mux
+    Route generates routing for controller.
+

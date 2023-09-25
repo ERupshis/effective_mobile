@@ -1,4 +1,17 @@
 package config // import "github.com/erupshis/effective_mobile/internal/server/config"
 
-type Config struct{ ... }
-    func Parse() Config
+
+TYPES
+
+type Config struct {
+	BrokerAddr  []string
+	DatabaseDSN string
+	CacheDSN    string
+	Group       string
+	Host        string
+	TopicIn     string
+	TopicError  string
+}
+
+func Parse() Config
+
