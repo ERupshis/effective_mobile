@@ -93,7 +93,7 @@ func (s *storage) DeletePersonById(ctx context.Context, id int64) (*datastructs.
 // UpdatePersonById updates person selected by id. Applies filtering for input filter values. Returns person data.
 func (s *storage) UpdatePersonById(ctx context.Context, id int64, values map[string]interface{}) (*datastructs.PersonData, error) {
 	filteredValues := requestshelper.FilterValues(values)
-	if len(values) == 0 {
+	if len(filteredValues) == 0 {
 		return nil, fmt.Errorf("storage: update: missing correct filters in request")
 	}
 
