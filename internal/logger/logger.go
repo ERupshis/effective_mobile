@@ -8,10 +8,12 @@ import (
 	"go.uber.org/zap"
 )
 
-type Logger struct {
+// loggerZap wrapper of Zap logger.
+type loggerZap struct {
 	zap *zap.Logger
 }
 
+// CreateZapLogger create method for zap logger.
 func CreateZapLogger(level string) (BaseLogger, error) {
 	cfg, err := initConfig(level)
 	if err != nil {
@@ -20,27 +22,30 @@ func CreateZapLogger(level string) (BaseLogger, error) {
 
 	log, err := cfg.Build()
 	if err != nil {
-		return nil, fmt.Errorf("create zap logger^ %w", err)
+		return nil, fmt.Errorf("create zap loggerZap^ %w", err)
 	}
 
-	return &Logger{zap: log}, nil
+	return &loggerZap{zap: log}, nil
 }
 
-func (l *Logger) Info(msg string, fields ...interface{}) {
+// Info generates 'info' level log.
+func (l *loggerZap) Info(msg string, fields ...interface{}) {
 	l.zap.Info(fmt.Sprintf(msg, fields...))
 }
 
-func (l *Logger) Printf(msg string, fields ...interface{}) {
+// Printf interface for kafka's implementation.
+func (l *loggerZap) Printf(msg string, fields ...interface{}) {
 	l.Info(msg, fields...)
 }
 
+// initConfig method that initializes logger.
 func initConfig(level string) (zap.Config, error) {
 	cfg := zap.NewProductionConfig()
 
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {
 		emptyConfig := zap.Config{}
-		return emptyConfig, fmt.Errorf("init zap logger config: %w", err)
+		return emptyConfig, fmt.Errorf("init zap loggerZap config: %w", err)
 	}
 	cfg.Level = lvl
 	cfg.DisableCaller = true
@@ -48,14 +53,16 @@ func initConfig(level string) (zap.Config, error) {
 	return cfg, nil
 }
 
-func (l *Logger) Sync() {
+// Sync flushing any buffered log entries.
+func (l *loggerZap) Sync() {
 	err := l.zap.Sync()
 	if err != nil {
 		panic(err)
 	}
 }
 
-func (l *Logger) LogHandler(h http.Handler) http.Handler {
+// LogHandler handler for requests logging.
+func (l *loggerZap) LogHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
