@@ -33,7 +33,7 @@ func (c *Controller) Route() *chi.Mux {
 
 	r.Use(c.log.LogHandler)
 
-	r.Post("/", c.createPersonHandler)
+	r.Post("/", c.insertPersonHandler)
 	r.Delete("/", c.deletePersonByIdHandler)
 	r.Put("/", c.updatePersonByIdHandler)
 	r.Patch("/", c.updatePersonByIdHandler)
@@ -44,36 +44,36 @@ func (c *Controller) Route() *chi.Mux {
 	return r
 }
 
-func (c *Controller) createPersonHandler(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) insertPersonHandler(w http.ResponseWriter, r *http.Request) {
 	buf := bytes.Buffer{}
 	if _, err := buf.ReadFrom(r.Body); err != nil {
-		c.log.Info("[%s:Controller:createPersonHandler] failed to read request body: %v", packageName, err)
+		c.log.Info("[%s:Controller:insertPersonHandler] failed to read request body: %v", packageName, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	defer helpers.ExecuteWithLogError(r.Body.Close, c.log)
 
 	if len(buf.Bytes()) == 0 {
-		c.log.Info("[%s:Controller:createPersonHandler] empty request's body", packageName)
+		c.log.Info("[%s:Controller:insertPersonHandler] empty request's body", packageName)
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		return
 	}
 
 	personData, err := requestshelper.ParsePersonDataFromJSON(buf.Bytes())
 	if err != nil {
-		c.log.Info("[%s:Controller:createPersonHandler] failed to parse query params: %v", packageName, err)
+		c.log.Info("[%s:Controller:insertPersonHandler] failed to parse query params: %v", packageName, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	newPersonId, err := c.strg.AddPerson(r.Context(), personData)
 	if err != nil {
-		c.log.Info("[%s:Controller:createPersonHandler] cannot process: %v", packageName, err)
+		c.log.Info("[%s:Controller:insertPersonHandler] cannot process: %v", packageName, err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	c.log.Info("[%s:Controller:createPersonHandler] person with id '%d' successfully added", packageName, newPersonId)
+	c.log.Info("[%s:Controller:insertPersonHandler] person with id '%d' successfully added", packageName, newPersonId)
 	responseBody := []byte(fmt.Sprintf("Added with id: %d", newPersonId))
 	w.Header().Add("Content-Length", strconv.FormatInt(int64(len(responseBody)), 10))
 	w.Header().Add("Content-Type", "text/plain")
