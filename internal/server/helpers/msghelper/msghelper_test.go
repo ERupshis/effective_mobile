@@ -241,10 +241,7 @@ func TestPutErrorMessageInChan(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.args.chError != nil {
 				go func() {
-					select {
-					case <-tt.args.chError:
-						return
-					}
+					<-tt.args.chError
 				}()
 			}
 
