@@ -137,8 +137,10 @@ func TestRetryCallWithTimeout(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		_, _, err := RetryCallWithTimeout(tt.args.ctx, tt.args.log, tt.args.intervals, tt.args.repeatableErrors, tt.args.callback)
-		assert.Equal(t, tt.wantErr, err)
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, err := RetryCallWithTimeout(tt.args.ctx, tt.args.log, tt.args.intervals, tt.args.repeatableErrors, tt.args.callback)
+			assert.Equal(t, tt.wantErr, err)
+		})
 	}
 }
 
@@ -215,7 +217,9 @@ func TestRetryCallWithTimeoutErrorOnly(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		err := RetryCallWithTimeoutErrorOnly(tt.args.ctx, tt.args.log, tt.args.intervals, tt.args.repeatableErrors, tt.args.callback)
-		assert.Equal(t, tt.wantErr, err)
+		t.Run(tt.name, func(t *testing.T) {
+			err := RetryCallWithTimeoutErrorOnly(tt.args.ctx, tt.args.log, tt.args.intervals, tt.args.repeatableErrors, tt.args.callback)
+			assert.Equal(t, tt.wantErr, err)
+		})
 	}
 }

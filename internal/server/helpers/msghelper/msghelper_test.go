@@ -238,16 +238,14 @@ func TestPutErrorMessageInChan(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.args.chError != nil {
-				go func() {
-					<-tt.args.chError
-				}()
-			}
+		if tt.args.chError != nil {
+			go func(chOut <-chan msgbroker.Message) {
+				<-chOut
+			}(tt.args.chError)
+		}
 
-			if err := PutErrorMessageInChan(tt.args.chError, tt.args.msg, tt.args.errMsgKey, tt.args.err); (err != nil) != tt.wantErr {
-				t.Errorf("PutErrorMessageInChan() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
+		if err := PutErrorMessageInChan(tt.args.chError, tt.args.msg, tt.args.errMsgKey, tt.args.err); (err != nil) != tt.wantErr {
+			t.Errorf("PutErrorMessageInChan() error = %v, wantErr %v", err, tt.wantErr)
+		}
 	}
 }
