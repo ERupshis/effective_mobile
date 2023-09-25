@@ -12,6 +12,8 @@ type Message struct {
 }
 
 // Producer interface of messages sender.
+//
+//go:generate mockgen -destination=../../mocks/mock_Producer.go -package=mocks github.com/erupshis/effective_mobile/internal/msgbroker Producer
 type Producer interface {
 	// Listen goroutine method for listening response messages.
 	Listen(ctx context.Context, chMessages <-chan Message)
@@ -24,6 +26,8 @@ type Producer interface {
 }
 
 // Consumer interface of messages reader.
+//
+//go:generate mockgen -destination=../../mocks/mock_Consumer.go -package=mocks github.com/erupshis/effective_mobile/internal/msgbroker Consumer
 type Consumer interface {
 	// Listen goroutine method for listening to send response messages.
 	Listen(ctx context.Context, chMessages chan<- Message)
