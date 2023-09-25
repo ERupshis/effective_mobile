@@ -1,3 +1,4 @@
+// Package errorsctrl collects errors from other controllers(of kafka messages handling) in global error channel.
 package errorsctrl
 
 import (
@@ -9,6 +10,7 @@ import (
 
 const packageName = "errorsctrl"
 
+// Controller struct of controller. Controls life cycle of global error channel.
 type Controller struct {
 	//INPUT channels.
 	chansIn []<-chan msgbroker.Message
@@ -19,6 +21,7 @@ type Controller struct {
 	log logger.BaseLogger
 }
 
+// Create creation method.
 func Create(chansIn []<-chan msgbroker.Message, chanOut chan<- msgbroker.Message, log logger.BaseLogger) *Controller {
 	return &Controller{
 		chansIn: chansIn,
@@ -27,6 +30,7 @@ func Create(chansIn []<-chan msgbroker.Message, chanOut chan<- msgbroker.Message
 	}
 }
 
+// Run main goroutine method creates collectors for input channels. In case of ctx cancel - closes output channel
 func (c *Controller) Run(ctx context.Context) {
 	stopCh := make(chan struct{})
 	c.fanInMessages(stopCh)
@@ -42,6 +46,7 @@ func (c *Controller) Run(ctx context.Context) {
 	}
 }
 
+// fanInMessages error's collectors method.
 func (c *Controller) fanInMessages(stopCh <-chan struct{}) {
 	c.log.Info("[%s:Controller:fanInMessages] starting collectors channels handling in goroutines. count: %d", packageName, len(c.chansIn))
 	for _, chIn := range c.chansIn {
