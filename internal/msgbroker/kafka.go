@@ -9,7 +9,7 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-// KafkaProducer WRITER.
+// KafkaProducer writer wrapper.
 type KafkaProducer struct {
 	kafka.Writer
 	log logger.BaseLogger
@@ -30,6 +30,7 @@ func CreateKafkaProducer(brokerAddr []string, topic string, log logger.BaseLogge
 	return producer
 }
 
+// Listen goroutine method for listening response messages.
 func (p *KafkaProducer) Listen(ctx context.Context, chMessages <-chan Message) {
 	for {
 		select {
@@ -51,6 +52,7 @@ func (p *KafkaProducer) Listen(ctx context.Context, chMessages <-chan Message) {
 	}
 }
 
+// SendMessage method for sending messages.
 func (p *KafkaProducer) SendMessage(ctx context.Context, key, value string) error {
 	message := kafka.Message{
 		Key:   []byte(key),
@@ -64,10 +66,12 @@ func (p *KafkaProducer) SendMessage(ctx context.Context, key, value string) erro
 	return nil
 }
 
+// Close flushes pending sends and waits for all writes to complete before returning.
 func (p *KafkaProducer) Close() error {
 	return p.Writer.Close()
 }
 
+// KafkaConsumer Reader wrapper.
 type KafkaConsumer struct {
 	*kafka.Reader
 	log logger.BaseLogger
@@ -88,6 +92,7 @@ func CreateKafkaConsumer(brokerAddr []string, topic string, groupID string, log 
 	return &KafkaConsumer{Reader: reader, log: log}
 }
 
+// Listen goroutine method for listening to send response messages.
 func (c *KafkaConsumer) Listen(ctx context.Context, chMessages chan<- Message) {
 	for {
 		select {
@@ -105,6 +110,7 @@ func (c *KafkaConsumer) Listen(ctx context.Context, chMessages chan<- Message) {
 	}
 }
 
+// ReadMessage method for reading incoming messages.
 func (c *KafkaConsumer) ReadMessage(ctx context.Context) (Message, error) {
 	rawMessage, err := c.Reader.ReadMessage(ctx)
 	if err != nil {
@@ -117,6 +123,7 @@ func (c *KafkaConsumer) ReadMessage(ctx context.Context) (Message, error) {
 	return message, nil
 }
 
+// Close closes the stream, preventing the program from reading any more messages from it.
 func (c *KafkaConsumer) Close() error {
 	return c.Reader.Close()
 }

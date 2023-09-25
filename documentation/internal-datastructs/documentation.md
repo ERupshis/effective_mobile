@@ -6,6 +6,7 @@ TYPES
 type Age struct {
 	Data int64 `json:"age"`
 }
+    Age support struct to extract person's age from remote API message.
 
 func (v Age) MarshalEasyJSON(w *jwriter.Writer)
     MarshalEasyJSON supports easyjson.Marshaler interface
@@ -22,6 +23,8 @@ func (v *Age) UnmarshalJSON(data []byte) error
 type Countries struct {
 	Data []CountryData `json:"country"`
 }
+    Countries support struct to extract person's country from remote API
+    message.
 
 func (v Countries) MarshalEasyJSON(w *jwriter.Writer)
     MarshalEasyJSON supports easyjson.Marshaler interface
@@ -39,6 +42,8 @@ type CountryData struct {
 	Id          string  `json:"country_id"`
 	Probability float64 `json:"probability"`
 }
+    CountryData support struct to extract the most relevant person's country
+    from remote API message.
 
 func (v CountryData) MarshalEasyJSON(w *jwriter.Writer)
     MarshalEasyJSON supports easyjson.Marshaler interface
@@ -55,6 +60,7 @@ func (v *CountryData) UnmarshalJSON(data []byte) error
 type Error struct {
 	Data string `json:"error"`
 }
+    Error support struct to extract error from remote API message.
 
 func (v Error) MarshalEasyJSON(w *jwriter.Writer)
     MarshalEasyJSON supports easyjson.Marshaler interface
@@ -72,6 +78,7 @@ type ErrorMessage struct {
 	Error           string `json:"error"`
 	OriginalMessage string `json:"original"`
 }
+    ErrorMessage kafka's error message for response on incorrect input.
 
 func (v ErrorMessage) MarshalEasyJSON(w *jwriter.Writer)
     MarshalEasyJSON supports easyjson.Marshaler interface
@@ -89,6 +96,8 @@ type ExtraDataFilling struct {
 	Raw  msgbroker.Message
 	Data PersonData
 }
+    ExtraDataFilling extended struct with raw message(for add it in error
+    message) in case of errors.
 
 func (v ExtraDataFilling) MarshalEasyJSON(w *jwriter.Writer)
     MarshalEasyJSON supports easyjson.Marshaler interface
@@ -105,6 +114,7 @@ func (v *ExtraDataFilling) UnmarshalJSON(data []byte) error
 type Gender struct {
 	Data string `json:"gender"`
 }
+    Gender support struct to extract person's gender from remote API message.
 
 func (v Gender) MarshalEasyJSON(w *jwriter.Writer)
     MarshalEasyJSON supports easyjson.Marshaler interface
@@ -127,6 +137,7 @@ type PersonData struct {
 	Gender     string `json:"gender,omitempty"`
 	Country    string `json:"country,omitempty"`
 }
+    PersonData main struct containing person's data.
 
 func (v PersonData) MarshalEasyJSON(w *jwriter.Writer)
     MarshalEasyJSON supports easyjson.Marshaler interface
