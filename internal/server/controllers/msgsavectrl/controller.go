@@ -38,6 +38,8 @@ func Create(chIn <-chan datastructs.ExtraDataFilling, chError chan<- msgbroker.M
 
 // Run main goroutine listens input channel and processes it.
 func (c *Controller) Run(ctx context.Context) {
+	c.log.Info("[%s:Controller:Run] start work", packageName)
+
 	for {
 		select {
 		case <-ctx.Done():

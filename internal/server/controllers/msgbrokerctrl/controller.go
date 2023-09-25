@@ -39,6 +39,8 @@ func Create(chIn <-chan msgbroker.Message, chError chan<- msgbroker.Message, chP
 
 // Run main goroutine listens input channel and processes it.
 func (c *Controller) Run(ctx context.Context) {
+	c.log.Info("[%s:Controller:Run] start work", packageName)
+
 	for {
 		select {
 		case <-ctx.Done():

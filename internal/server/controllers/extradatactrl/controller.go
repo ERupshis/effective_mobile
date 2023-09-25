@@ -45,15 +45,19 @@ func Create(chIn <-chan datastructs.ExtraDataFilling, chOut chan<- datastructs.E
 }
 
 func (c *Controller) Run(ctx context.Context) {
+	c.log.Info("[%s:Controller:Run] start work", packageName)
+
 	for {
 		select {
 		case <-ctx.Done():
+			c.log.Info("[%s:Controller:Run] stop work due to context was canceled", packageName)
 			close(c.chError)
 			close(c.chOut)
 			return
 
 		case personDataIn, ok := <-c.chIn:
 			if !ok {
+				c.log.Info("[%s:Controller:Run] stop work due to input channel was closed", packageName)
 				close(c.chError)
 				close(c.chOut)
 				return

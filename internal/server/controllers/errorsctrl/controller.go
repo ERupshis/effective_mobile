@@ -32,12 +32,15 @@ func Create(chansIn []<-chan msgbroker.Message, chanOut chan<- msgbroker.Message
 
 // Run main goroutine method creates collectors for input channels. In case of ctx cancel - closes output channel
 func (c *Controller) Run(ctx context.Context) {
+	c.log.Info("[%s:Controller:Run] start work", packageName)
+
 	stopCh := make(chan struct{})
 	c.fanInMessages(stopCh)
 
 	for {
 		if _, ok := <-ctx.Done(); !ok {
-			c.log.Info("[%s:Controller:fanInMessages] close output channel(context is over).", packageName)
+			c.log.Info("[%s:Controller:Run] stop work due to context was canceled", packageName)
+			c.log.Info("[%s:Controller:Run] close output channel(context is over).", packageName)
 			stopCh <- struct{}{}
 			close(c.chOut)
 			c.chOut = nil
