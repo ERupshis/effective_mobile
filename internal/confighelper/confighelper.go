@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-// SUPPORT FUNCTIONS.
-
 // SetEnvToParamIfNeed parses and assign string val to pointer of 'param' hidden under interface type.
 // In case of unknown type returns error.
 func SetEnvToParamIfNeed(param interface{}, val string) error {
