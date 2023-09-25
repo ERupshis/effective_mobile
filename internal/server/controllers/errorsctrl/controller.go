@@ -54,6 +54,7 @@ func (c *Controller) fanInMessages(stopCh <-chan struct{}) {
 			for errMsg := range chIn {
 				select {
 				case <-stopCh:
+					c.log.Info("[%s:Controller:fanInMessages] stop fanInMessages controller due to cancel context", packageName)
 					return
 				default:
 					if c.chOut == nil {
