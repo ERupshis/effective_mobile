@@ -1,3 +1,4 @@
+// Package httpctrl rest api controller. Handles http requests
 package httpctrl
 
 import (
@@ -16,11 +17,13 @@ import (
 
 const packageName = "httpctrl"
 
+// Controller struct of controller. Receives CRUD requests, validate them and forwards to storage if requests are correct.
 type Controller struct {
 	strg storage.BaseStorage
 	log  logger.BaseLogger
 }
 
+// Create creates controller.
 func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller {
 	return &Controller{
 		strg: strg,
@@ -28,6 +31,7 @@ func Create(strg storage.BaseStorage, log logger.BaseLogger) *Controller {
 	}
 }
 
+// Route handlers router.
 func (c *Controller) Route() *chi.Mux {
 	r := chi.NewRouter()
 
@@ -44,6 +48,7 @@ func (c *Controller) Route() *chi.Mux {
 	return r
 }
 
+// insertPersonHandler http POST request handler. Receives person's data in request's json body.
 func (c *Controller) insertPersonHandler(w http.ResponseWriter, r *http.Request) {
 	buf := bytes.Buffer{}
 	if _, err := buf.ReadFrom(r.Body); err != nil {
@@ -80,6 +85,7 @@ func (c *Controller) insertPersonHandler(w http.ResponseWriter, r *http.Request)
 	_, _ = w.Write(responseBody)
 }
 
+// deletePersonByIdHandler http DELETE request handler. Receives person's id in query.
 func (c *Controller) deletePersonByIdHandler(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
 	if values.Get("id") == "" {
@@ -107,6 +113,7 @@ func (c *Controller) deletePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 	_, _ = w.Write(responseBody)
 }
 
+// updatePersonByIdHandler http PUT/PATCH request handler. Receives person's id in query plus data to update in json body.
 func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
 	if values.Get("id") == "" {
@@ -150,6 +157,8 @@ func (c *Controller) updatePersonByIdHandler(w http.ResponseWriter, r *http.Requ
 	_, _ = w.Write(responseBody)
 }
 
+// selectPersonsByFilterHandler http GET request handler. Uses query filter. Supports filtering on all person's
+// data filed and id. Plus supports pagination of result.
 func (c *Controller) selectPersonsByFilterHandler(w http.ResponseWriter, r *http.Request) {
 	values := r.URL.Query()
 	valuesToFilter, err := requestshelper.ParseQueryValuesIntoMap(values)
