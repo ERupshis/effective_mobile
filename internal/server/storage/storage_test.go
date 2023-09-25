@@ -50,7 +50,7 @@ func Test_storage_AddPerson(t *testing.T) {
 				ctx: context.Background(),
 				newPerson: &datastructs.PersonData{
 					Name:    "name",
-					Surname: "suranme",
+					Surname: "surname",
 					Age:     12,
 					Gender:  "male",
 					Country: "ru",
@@ -69,7 +69,7 @@ func Test_storage_AddPerson(t *testing.T) {
 				ctx: context.Background(),
 				newPerson: &datastructs.PersonData{
 					Name:    "name",
-					Surname: "suranme",
+					Surname: "surname",
 					Age:     12,
 				},
 			},
@@ -86,7 +86,7 @@ func Test_storage_AddPerson(t *testing.T) {
 				ctx: context.Background(),
 				newPerson: &datastructs.PersonData{
 					Name:    "name",
-					Surname: "suranme",
+					Surname: "surname",
 					Age:     12,
 					Gender:  "male",
 					Country: "ru",
@@ -513,7 +513,7 @@ func Test_storage_UpdatePersonById(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid storage maanger couldn't select modified person's data by id",
+			name: "invalid storage manager couldn't select modified person's data by id",
 			fields: fields{
 				manager: mockBaseStorageManager,
 				log:     log,

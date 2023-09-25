@@ -93,7 +93,7 @@ func (c *Controller) doRemoteApiRequest(ctx context.Context, serviceUrl string, 
 		errAPI := datastructs.Error{}
 		err = json.Unmarshal(body, &errAPI)
 		if err != nil {
-			c.log.Info("JSON unmarshaling fail: %v", err)
+			c.log.Info("JSON unmarshalling fail: %v", err)
 			return fmt.Errorf("failed to parse response json: %w", err)
 		}
 
@@ -109,7 +109,7 @@ func (c *Controller) doRemoteApiRequest(ctx context.Context, serviceUrl string, 
 		countries := datastructs.Countries{}
 		err = json.Unmarshal(body, &countries)
 		if err != nil {
-			c.log.Info("[%s:Controller:doRemoteApiRequest] JSON unmarshaling fail: %v", packageName, err)
+			c.log.Info("[%s:Controller:doRemoteApiRequest] JSON unmarshalling fail: %v", packageName, err)
 			return err
 		}
 

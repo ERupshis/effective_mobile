@@ -8,7 +8,7 @@ type responseData struct {
 	size   int
 }
 
-// loggingResponseWriter overriden base http.ResponseWriter for logging responseData.
+// loggingResponseWriter override base http.ResponseWriter for logging responseData.
 type loggingResponseWriter struct {
 	http.ResponseWriter
 	responseData *responseData

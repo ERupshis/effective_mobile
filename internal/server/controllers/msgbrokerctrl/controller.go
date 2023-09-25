@@ -71,7 +71,7 @@ func (c *Controller) Run(ctx context.Context) {
 	}
 }
 
-// handleMessage message validatior. Unmarshaling from json and validates it for critical fields presense.
+// handleMessage message validator. Unmarshalling from json and validates it for critical fields presence.
 func (c *Controller) handleMessage(msg msgbroker.Message) (*datastructs.PersonData, error) {
 	personData := datastructs.PersonData{}
 	if err := json.Unmarshal(msg.Value, &personData); err != nil {

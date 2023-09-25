@@ -461,7 +461,7 @@ func Test_convertQueryValueIntoInt64(t *testing.T) {
 		{
 			name: "valid int type as input",
 			args: args{
-				value: int(355),
+				value: 355,
 			},
 			want: 355,
 		},
