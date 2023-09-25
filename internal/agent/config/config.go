@@ -1,3 +1,4 @@
+// Package config agent's setting parser. Applies flags and environments. Environments are prioritized.
 package config
 
 import (
@@ -9,6 +10,7 @@ import (
 	"github.com/erupshis/effective_mobile/internal/confighelper"
 )
 
+// Config agent's settings.
 type Config struct {
 	BrokerAddr []string
 	TopicIn    string
@@ -16,6 +18,7 @@ type Config struct {
 	Group      string
 }
 
+// Parse main func to parse variables.
 func Parse() Config {
 	var config = Config{}
 	checkFlags(&config)
@@ -31,7 +34,9 @@ const (
 	flagGroup    = "g"
 )
 
+// checkFlags checks flags of app's launch.
 func checkFlags(config *Config) {
+	//kafka.
 	var brokers string
 	flag.StringVar(&brokers, flagBrokers, "localhost:9092", "kafka brokers with ',' separator between")
 	config.BrokerAddr = strings.Split(brokers, ",")
@@ -44,6 +49,7 @@ func checkFlags(config *Config) {
 }
 
 // ENVIRONMENTS PARSING.
+// envConfig struct of environments suitable for agent.
 type envConfig struct {
 	BrokerAddr string `env:"BROKERS"`
 	TopicError string `env:"TOPIC_ERROR"`
@@ -51,6 +57,7 @@ type envConfig struct {
 	Group      string `env:"GROUP"`
 }
 
+// checkEnvironments checks environments suitable for agent.
 func checkEnvironments(config *Config) {
 	var envs = envConfig{}
 	err := env.Parse(&envs)
@@ -58,8 +65,9 @@ func checkEnvironments(config *Config) {
 		log.Fatal(err)
 	}
 
-	confighelper.SetEnvToParamIfNeed(&config.BrokerAddr, envs.BrokerAddr)
-	confighelper.SetEnvToParamIfNeed(&config.TopicIn, envs.TopicError)
-	confighelper.SetEnvToParamIfNeed(&config.TopicOut, envs.TopicOut)
-	confighelper.SetEnvToParamIfNeed(&config.Group, envs.Group)
+	//kafka.
+	_ = confighelper.SetEnvToParamIfNeed(&config.BrokerAddr, envs.BrokerAddr)
+	_ = confighelper.SetEnvToParamIfNeed(&config.TopicIn, envs.TopicError)
+	_ = confighelper.SetEnvToParamIfNeed(&config.TopicOut, envs.TopicOut)
+	_ = confighelper.SetEnvToParamIfNeed(&config.Group, envs.Group)
 }

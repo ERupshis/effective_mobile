@@ -1,3 +1,4 @@
+// Package config server's setting parser. Applies flags and environments. Environments are prioritized.
 package config
 
 import (
@@ -9,16 +10,18 @@ import (
 	"github.com/erupshis/effective_mobile/internal/confighelper"
 )
 
+// Config server's settings.
 type Config struct {
-	BrokerAddr  []string
-	DatabaseDSN string
-	CacheDSN    string
-	Group       string
-	Host        string
-	TopicIn     string
-	TopicError  string
+	BrokerAddr  []string // BrokerAddr kafka's broker.
+	DatabaseDSN string   // DatabaseDSN PostgreSQL data source name.
+	CacheDSN    string   // CacheDSN Redis data source name.
+	Group       string   // Group kafka's group.
+	Host        string   // Host server's address.
+	TopicIn     string   // TopicIn kafka's incoming message's topic.
+	TopicError  string   // TopicIn kafka's out coming errors message's topic.
 }
 
+// Parse main func to parse variables.
 func Parse() Config {
 	var config = Config{}
 	checkFlags(&config)
@@ -37,6 +40,7 @@ const (
 	flagCacheDSN    = "c"
 )
 
+// checkFlags checks flags of app's launch.
 func checkFlags(config *Config) {
 	// main app.
 	flag.StringVar(&config.Host, flagAddress, "localhost:8080", "server endpoint")
@@ -60,6 +64,7 @@ func checkFlags(config *Config) {
 }
 
 // ENVIRONMENTS PARSING.
+// envConfig struct of environments suitable for server.
 type envConfig struct {
 	BrokerAddr  string `env:"BROKERS"`
 	DatabaseDSN string `env:"DATABASE_DSN"`
@@ -70,6 +75,7 @@ type envConfig struct {
 	TopicError  string `env:"TOPIC_ERROR"`
 }
 
+// checkEnvironments checks environments suitable for server.
 func checkEnvironments(config *Config) {
 	var envs = envConfig{}
 	err := env.Parse(&envs)
@@ -78,17 +84,17 @@ func checkEnvironments(config *Config) {
 	}
 
 	// main app.
-	confighelper.SetEnvToParamIfNeed(&config.Host, envs.Host)
+	_ = confighelper.SetEnvToParamIfNeed(&config.Host, envs.Host)
 
 	// postgres.
-	confighelper.SetEnvToParamIfNeed(&config.DatabaseDSN, envs.DatabaseDSN)
+	_ = confighelper.SetEnvToParamIfNeed(&config.DatabaseDSN, envs.DatabaseDSN)
 
 	// kafka.
-	confighelper.SetEnvToParamIfNeed(&config.BrokerAddr, envs.BrokerAddr)
-	confighelper.SetEnvToParamIfNeed(&config.Group, envs.Group)
-	confighelper.SetEnvToParamIfNeed(&config.TopicIn, envs.TopicIn)
-	confighelper.SetEnvToParamIfNeed(&config.TopicError, envs.TopicError)
+	_ = confighelper.SetEnvToParamIfNeed(&config.BrokerAddr, envs.BrokerAddr)
+	_ = confighelper.SetEnvToParamIfNeed(&config.Group, envs.Group)
+	_ = confighelper.SetEnvToParamIfNeed(&config.TopicIn, envs.TopicIn)
+	_ = confighelper.SetEnvToParamIfNeed(&config.TopicError, envs.TopicError)
 
 	// redis.
-	confighelper.SetEnvToParamIfNeed(&config.CacheDSN, envs.CacheDSN)
+	_ = confighelper.SetEnvToParamIfNeed(&config.CacheDSN, envs.CacheDSN)
 }
