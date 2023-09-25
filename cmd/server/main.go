@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/erupshis/effective_mobile/internal/client"
 	"github.com/erupshis/effective_mobile/internal/datastructs"
@@ -115,9 +117,14 @@ func main() {
 	router.Mount("/", httpController.Route())
 	router.Mount("/graphql", graphqlController.Route())
 
-	log.Info("server is launching with Host setting: %s", cfg.Host)
-	if err := http.ListenAndServe(cfg.Host, router); err != nil {
-		log.Info("server refused to start with error: %v", err)
-		panic(err)
-	}
+	go func() {
+		log.Info("server is launching with Host setting: %s", cfg.Host)
+		if err := http.ListenAndServe(cfg.Host, router); err != nil {
+			log.Info("server refused to start with error: %v", err)
+		}
+	}()
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	<-sigCh
 }
