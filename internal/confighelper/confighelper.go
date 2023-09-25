@@ -8,9 +8,11 @@ import (
 
 // SUPPORT FUNCTIONS.
 
-func SetEnvToParamIfNeed(param interface{}, val string) {
+// SetEnvToParamIfNeed parses and assign string val to pointer of 'param' hidden under interface type.
+// In case of unknown type returns error.
+func SetEnvToParamIfNeed(param interface{}, val string) error {
 	if val == "" {
-		return
+		return nil
 	}
 
 	switch param := param.(type) {
@@ -18,23 +20,26 @@ func SetEnvToParamIfNeed(param interface{}, val string) {
 		if envVal, err := strconv.Atoi(val); err == nil {
 			*param = envVal
 		} else {
-			panic(err)
+			return err
 		}
 	case *int64:
 		if envVal, err := Atoi64(val); err == nil {
 			*param = envVal
 		} else {
-			panic(err)
+			return err
 		}
 	case *string:
 		*param = val
 	case *[]string:
 		*param = strings.Split(val, ",")
 	default:
-		panic(fmt.Errorf("wrong input param type"))
+		return fmt.Errorf("wrong input param type")
 	}
+
+	return nil
 }
 
+// Atoi64 converts string into int64.
 func Atoi64(value string) (int64, error) {
 	return strconv.ParseInt(value, 10, 64)
 }

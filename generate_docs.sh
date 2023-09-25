@@ -1,17 +1,26 @@
 #!/bin/bash
 
-# Change to the project root directory
-#cd /path/to/your/project
+# Change to the project root directory (if necessary)
+# cd /path/to/your/project
 
 # Generate documentation for all packages and subpackages
 for package in $(go list ./...); do
-    go doc "$package" >> documentation.txt
+    # Get the package name without slashes
+    package_name=$(echo "$package" | tr / -)
+
+    # Remove the prefix 'github.com-erupshis-effective_mobile-' if it exists
+    package_name="${package_name#github.com-erupshis-effective_mobile-}"
+
+    # Create a directory for the package's documentation
+    mkdir -p "documentation/$package_name"
+
+    # Generate the documentation content using go doc and redirect to the Markdown file
+    go doc "$package" > "documentation/$package_name/documentation.md"
 done
 
-# Check if documentation.txt is empty and delete it if it is
-if [ -s "documentation.txt" ]; then
-    echo "Documentation was generated and saved in documentation.txt"
+# Check if any Markdown documentation files were generated
+if ls documentation/*/*.md 1>/dev/null 2>&1; then
+    echo "Documentation was generated and saved in MD files."
 else
-    echo "Documentation is empty. Removing documentation.txt."
-    rm "documentation.txt"
+    echo "No documentation generated."
 fi
