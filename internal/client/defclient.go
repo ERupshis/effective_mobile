@@ -39,7 +39,7 @@ func (c *DefaultClient) DoGetURIWithQuery(ctx context.Context, url string, param
 }
 
 func (c *DefaultClient) makeEmptyBodyRequest(ctx context.Context, method string, url string) (int64, []byte, error) {
-	req, err := http.NewRequest(ctx, method, url, bytes.NewBuffer([]byte{}))
+	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer([]byte{}))
 	if err != nil {
 		return http.StatusInternalServerError, []byte{}, fmt.Errorf("request creation: %w", err)
 	}
