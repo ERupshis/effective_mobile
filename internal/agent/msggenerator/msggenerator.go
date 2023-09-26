@@ -11,6 +11,7 @@ import (
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
 )
 
+// Run generator for agent to test kafka work on server.
 func Run(ctx context.Context, producer msgbroker.Producer, log logger.BaseLogger) {
 	chGeneratedNames := make(chan []byte)
 	go func(ctx context.Context, out <-chan []byte) {

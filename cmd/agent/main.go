@@ -48,11 +48,11 @@ func main() {
 			select {
 			case <-ctx.Done():
 				return
-			case _, ok := <-chOut:
+			case msg, ok := <-chOut:
 				if !ok {
 					return
 				}
-				//some work.
+				log.Info("Received error '%s'='%s'", msg.Key, msg.Value)
 			}
 		}
 	}(ctxWithCancel, chMessageErrors, log)
