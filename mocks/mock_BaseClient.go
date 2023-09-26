@@ -49,19 +49,3 @@ func (mr *MockBaseClientMockRecorder) DoGetURIWithQuery(arg0, arg1, arg2 interfa
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DoGetURIWithQuery", reflect.TypeOf((*MockBaseClient)(nil).DoGetURIWithQuery), arg0, arg1, arg2)
 }
-
-// makeEmptyBodyRequest mocks base method.
-func (m *MockBaseClient) makeEmptyBodyRequest(arg0 context.Context, arg1, arg2 string) (int64, []byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "makeEmptyBodyRequest", arg0, arg1, arg2)
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].([]byte)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// makeEmptyBodyRequest indicates an expected call of makeEmptyBodyRequest.
-func (mr *MockBaseClientMockRecorder) makeEmptyBodyRequest(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "makeEmptyBodyRequest", reflect.TypeOf((*MockBaseClient)(nil).makeEmptyBodyRequest), arg0, arg1, arg2)
-}
