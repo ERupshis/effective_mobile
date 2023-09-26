@@ -1,0 +1,1 @@
+CREATE DATABASE effective_mobile_db;

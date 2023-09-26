@@ -30,6 +30,7 @@ func (c *DefaultClient) DoGetURIWithQuery(ctx context.Context, url string, param
 		return c.makeEmptyBodyRequest(context, http.MethodGet, uri)
 	}
 
+	c.log.Info("make request to: %s", uri)
 	status, respBody, err := retryer.RetryCallWithTimeout(ctx, c.log, nil, nil, request)
 	if err != nil {
 		err = fmt.Errorf("couldn't send post request")
@@ -38,7 +39,7 @@ func (c *DefaultClient) DoGetURIWithQuery(ctx context.Context, url string, param
 }
 
 func (c *DefaultClient) makeEmptyBodyRequest(ctx context.Context, method string, url string) (int64, []byte, error) {
-	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer([]byte{}))
+	req, err := http.NewRequest(ctx, method, url, bytes.NewBuffer([]byte{}))
 	if err != nil {
 		return http.StatusInternalServerError, []byte{}, fmt.Errorf("request creation: %w", err)
 	}

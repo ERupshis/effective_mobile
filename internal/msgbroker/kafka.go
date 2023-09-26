@@ -44,7 +44,7 @@ func (p *KafkaProducer) Listen(ctx context.Context, chMessages <-chan Message) {
 
 			err := p.SendMessage(ctx, string(msg.Key), string(msg.Value))
 			if err != nil {
-				p.log.Info("[KafkaProducer:Listen] send message '%v' finished with error: %v.", msg, err)
+				p.log.Info("[KafkaProducer:Listen] send message '%s' finished with error: %v.", msg, err)
 				time.Sleep(time.Second)
 			}
 			p.log.Info("[KafkaProducer:Listen] message sent: %s = %s", string(msg.Key), string(msg.Value))
