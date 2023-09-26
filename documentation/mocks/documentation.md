@@ -10,6 +10,8 @@ Package mocks is a generated GoMock package.
 
 Package mocks is a generated GoMock package.
 
+Package mocks is a generated GoMock package.
+
 TYPES
 
 type MockBaseCacheManager struct {
@@ -58,6 +60,28 @@ func (mr *MockBaseCacheManagerMockRecorder) Get(arg0, arg1 interface{}) *gomock.
 
 func (mr *MockBaseCacheManagerMockRecorder) Has(arg0, arg1 interface{}) *gomock.Call
     Has indicates an expected call of Has.
+
+type MockBaseClient struct {
+	// Has unexported fields.
+}
+    MockBaseClient is a mock of BaseClient interface.
+
+func NewMockBaseClient(ctrl *gomock.Controller) *MockBaseClient
+    NewMockBaseClient creates a new mock instance.
+
+func (m *MockBaseClient) DoGetURIWithQuery(arg0 context.Context, arg1 string, arg2 map[string]string) (int64, []byte, error)
+    DoGetURIWithQuery mocks base method.
+
+func (m *MockBaseClient) EXPECT() *MockBaseClientMockRecorder
+    EXPECT returns an object that allows the caller to indicate expected use.
+
+type MockBaseClientMockRecorder struct {
+	// Has unexported fields.
+}
+    MockBaseClientMockRecorder is the mock recorder for MockBaseClient.
+
+func (mr *MockBaseClientMockRecorder) DoGetURIWithQuery(arg0, arg1, arg2 interface{}) *gomock.Call
+    DoGetURIWithQuery indicates an expected call of DoGetURIWithQuery.
 
 type MockBaseStorage struct {
 	// Has unexported fields.

@@ -5,7 +5,6 @@ TYPES
 
 type BaseClient interface {
 	DoGetURIWithQuery(ctx context.Context, url string, body map[string]string) (int64, []byte, error)
-	// Has unexported methods.
 }
 
 func CreateDefault(log logger.BaseLogger) BaseClient

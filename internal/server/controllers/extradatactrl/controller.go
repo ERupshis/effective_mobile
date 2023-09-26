@@ -1,3 +1,4 @@
+// Package extradatactr remote api calls controller.
 package extradatactrl
 
 import (
@@ -21,6 +22,8 @@ var remoteServices = []string{
 	"https://api.nationalize.io",
 }
 
+// Controller struct of controller. Receives data which should be filled with additional data, taken from remote services.
+// In case of success puts person data with extra data to further operating. Otherwise - generates error message in error channel.
 type Controller struct {
 	//INPUT channels
 	chIn <-chan datastructs.ExtraDataFilling
@@ -33,6 +36,7 @@ type Controller struct {
 	log    logger.BaseLogger
 }
 
+// Create creates controller.
 func Create(chIn <-chan datastructs.ExtraDataFilling, chOut chan<- datastructs.ExtraDataFilling, chError chan<- msgbroker.Message,
 	client client.BaseClient, log logger.BaseLogger) *Controller {
 	return &Controller{
@@ -44,6 +48,7 @@ func Create(chIn <-chan datastructs.ExtraDataFilling, chOut chan<- datastructs.E
 	}
 }
 
+// Run main goroutine listens input channel and processes it.
 func (c *Controller) Run(ctx context.Context) {
 	c.log.Info("[%s:Controller:Run] start work", packageName)
 
@@ -71,6 +76,7 @@ func (c *Controller) Run(ctx context.Context) {
 	}
 }
 
+// fillExtraData cycle for remote apis calls for additional person data.
 func (c *Controller) fillExtraData(ctx context.Context, dataIn *datastructs.ExtraDataFilling) bool {
 	for _, service := range remoteServices {
 		if err := c.doRemoteApiRequest(ctx, service, dataIn); err != nil {
@@ -82,6 +88,7 @@ func (c *Controller) fillExtraData(ctx context.Context, dataIn *datastructs.Extr
 	return true
 }
 
+// fillExtraData makes request to remote service and handling response.
 func (c *Controller) doRemoteApiRequest(ctx context.Context, serviceUrl string, dataIn *datastructs.ExtraDataFilling) error {
 	statusCode, body, err := c.client.DoGetURIWithQuery(ctx, serviceUrl, map[string]string{"name": dataIn.Data.Name})
 	if err != nil {
