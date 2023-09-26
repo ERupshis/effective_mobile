@@ -1,3 +1,5 @@
+//go:build !ignore_cancel
+
 // Package retryer implements repeat requests logic.
 package retryer
 
@@ -29,8 +31,7 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 
 	attempt := 0
 	for _, interval := range intervals {
-		//nolint
-		ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
+		ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second) //nolint
 		//go func() {
 		//	time.Sleep(time.Duration(interval) * time.Second)
 		//	cancel()
@@ -70,7 +71,7 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 	attemptNum := 0
 
 	for _, interval := range intervals {
-		ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
+		ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second) //nolint
 		//go func() {
 		//	time.Sleep(time.Duration(interval) * time.Second)
 		//	cancel()
