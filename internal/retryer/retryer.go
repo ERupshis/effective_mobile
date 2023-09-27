@@ -89,6 +89,7 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 	return err
 }
 
+// waitContextToCancel goroutine to prevent timeout context leaking.
 func waitContextToCancel(ctx context.Context, cancelFunc context.CancelFunc, interval int) {
 	select {
 	case <-ctx.Done():
