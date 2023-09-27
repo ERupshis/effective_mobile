@@ -30,7 +30,7 @@ func (c *DefaultClient) DoGetURIWithQuery(ctx context.Context, url string, param
 		return c.makeEmptyBodyRequest(context, http.MethodGet, uri)
 	}
 
-	c.log.Info("make request to: %s", uri)
+	c.log.Info("[DefaultClient:DoGetURIWithQuery] make request to: %s", uri)
 	status, respBody, err := retryer.RetryCallWithTimeout(ctx, c.log, nil, nil, request)
 	if err != nil {
 		err = fmt.Errorf("couldn't send post request")
