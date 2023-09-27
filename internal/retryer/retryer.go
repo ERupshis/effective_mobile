@@ -31,7 +31,7 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 
 	attempt := 0
 	for _, interval := range intervals {
-		ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second) //nolint
+		ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
 		//go func() {
 		//	time.Sleep(time.Duration(interval) * time.Second)
 		//	cancel()
@@ -46,7 +46,7 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 			log.Info("attempt '%d' to postJSON failed with error: %v", attempt, err)
 		}
 
-		if !canRetryCall(err, repeatableErrors) {
+		if !CanRetryCall(err, repeatableErrors) {
 			break
 		}
 	}
@@ -71,7 +71,7 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 	attemptNum := 0
 
 	for _, interval := range intervals {
-		ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second) //nolint
+		ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
 		//go func() {
 		//	time.Sleep(time.Duration(interval) * time.Second)
 		//	cancel()
@@ -87,7 +87,7 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 			log.Info("attemptNum '%d' to postJSON failed with error: %v", attemptNum, err)
 		}
 
-		if !canRetryCall(err, repeatableErrors) {
+		if !CanRetryCall(err, repeatableErrors) {
 			log.Info("this kind of error is not retriable: %v", err)
 			break
 		}
@@ -96,8 +96,8 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 	return err
 }
 
-// canRetryCall checks if generated error is in list of repeatableErrors.
-func canRetryCall(err error, repeatableErrors []error) bool {
+// CanRetryCall checks if generated error is in list of repeatableErrors.
+func CanRetryCall(err error, repeatableErrors []error) bool {
 	if repeatableErrors == nil {
 		return true
 	}
