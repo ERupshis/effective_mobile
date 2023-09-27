@@ -1,5 +1,3 @@
-//go:build !ignore_cancel
-
 // Package retryer implements repeat requests logic.
 package retryer
 

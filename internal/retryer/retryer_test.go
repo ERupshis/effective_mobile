@@ -1,5 +1,3 @@
-//go:build !ignore_cancel
-
 package retryer
 
 import (
