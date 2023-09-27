@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/erupshis/effective_mobile/internal/agent/config"
 	"github.com/erupshis/effective_mobile/internal/agent/msggenerator"
+	"github.com/erupshis/effective_mobile/internal/datastructs"
 	"github.com/erupshis/effective_mobile/internal/helpers"
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/erupshis/effective_mobile/internal/msgbroker"
@@ -52,7 +54,22 @@ func main() {
 				if !ok {
 					return
 				}
-				log.Info("Received error '%s'='%s'", msg.Key, msg.Value)
+
+				errMsg := datastructs.ErrorMessage{}
+				err := json.Unmarshal(msg.Value, &errMsg)
+				if err != nil {
+					log.Info("failed to parse incoming error message.")
+					continue
+				}
+
+				personData := datastructs.PersonData{}
+				err = json.Unmarshal([]byte(errMsg.OriginalMessage), &personData)
+				if err != nil {
+					log.Info("failed to parse incoming error message.")
+					continue
+				}
+
+				log.Info("Received error '%s' of type '%s', outcoming data was: %v", errMsg.Error, msg.Key, personData)
 			}
 		}
 	}(ctxWithCancel, chMessageErrors, log)
