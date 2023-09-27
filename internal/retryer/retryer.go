@@ -29,11 +29,11 @@ func RetryCallWithTimeout(ctx context.Context, log logger.BaseLogger, intervals 
 
 	attempt := 0
 	for _, interval := range intervals {
-		ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
-		//go func() {
-		//	time.Sleep(time.Duration(interval) * time.Second)
-		//	cancel()
-		//}()
+		ctxWithTime, cancel := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
+		go func() {
+			time.Sleep(time.Duration(interval) * time.Second)
+			cancel()
+		}()
 		status, body, err = callback(ctxWithTime)
 		if err == nil {
 			return status, body, nil
@@ -69,11 +69,11 @@ func RetryCallWithTimeoutErrorOnly(ctx context.Context, log logger.BaseLogger, i
 	attemptNum := 0
 
 	for _, interval := range intervals {
-		ctxWithTime, _ := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
-		//go func() {
-		//	time.Sleep(time.Duration(interval) * time.Second)
-		//	cancel()
-		//}()
+		ctxWithTime, cancel := context.WithTimeout(ctx, time.Duration(interval)*time.Second)
+		go func() {
+			time.Sleep(time.Duration(interval) * time.Second)
+			cancel()
+		}()
 		err = callback(ctxWithTime)
 
 		if err == nil {
