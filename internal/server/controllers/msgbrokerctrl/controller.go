@@ -60,9 +60,9 @@ func (c *Controller) Run(ctx context.Context) {
 			personData, err := c.handleMessage(msgIn)
 			if err != nil {
 				if err := msghelper.PutErrorMessageInChan(c.chError, &msgIn, "error-in-incoming-msg", err); err != nil {
-					c.log.Info("[%s:Controller:Run] put message in error chan failed: %w", packageName, err)
+					c.log.Info("[%s:Controller:Run] put message in error chan failed: %v", packageName, err)
 				}
-				c.log.Info("[%s:Controller:Run] put message in error chan done: %w", packageName, err)
+				c.log.Info("[%s:Controller:Run] put message in error chan done: %v", packageName, err)
 				continue
 			}
 

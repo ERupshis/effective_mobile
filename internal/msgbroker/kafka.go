@@ -3,7 +3,6 @@ package msgbroker
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/erupshis/effective_mobile/internal/logger"
 	"github.com/segmentio/kafka-go"
@@ -45,7 +44,7 @@ func (p *KafkaProducer) Listen(ctx context.Context, chMessages <-chan Message) {
 			err := p.SendMessage(ctx, string(msg.Key), string(msg.Value))
 			if err != nil {
 				p.log.Info("[KafkaProducer:Listen] send message '%s' finished with error: %v.", msg, err)
-				time.Sleep(time.Second)
+				continue
 			}
 			p.log.Info("[KafkaProducer:Listen] message sent: %s = %s", string(msg.Key), string(msg.Value))
 		}
@@ -103,6 +102,7 @@ func (c *KafkaConsumer) Listen(ctx context.Context, chMessages chan<- Message) {
 			msg, err := c.ReadMessage(ctx)
 			if err != nil {
 				c.log.Info("[KafkaConsumer:Listen] read message finished with error: %v.", err)
+				continue
 			}
 			c.log.Info("[KafkaConsumer:Listen] message received: %s = %s", string(msg.Key), string(msg.Value))
 			chMessages <- Message{Key: msg.Key, Value: msg.Value}

@@ -59,7 +59,7 @@ func Test_canRetryCall(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, CanRetryCall(tt.args.err, tt.args.repeatableErrors))
+			assert.Equal(t, tt.want, canRetryCall(tt.args.err, tt.args.repeatableErrors))
 		})
 	}
 }
