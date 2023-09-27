@@ -33,7 +33,7 @@ Agent can randomly generate messsages for kafka.
 
 Docker:
   - docker-compose up --build
-  (*server may not start from the first time due to db need some time to create 'effective_mobile_db')
+  (*server may not start from the first time due to postgreSQL needs some time to create 'effective_mobile_db')
 
 Postgres:
   - implemented 3 linked tables;
