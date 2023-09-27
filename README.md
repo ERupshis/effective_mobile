@@ -31,6 +31,9 @@ and save the data in a database. Upon request, provide information about the fou
 Solution consists from two sides: agent and server for kafka's processing local check.
 Agent can randomly generate messsages for kafka.
 
+Docker:
+  - docker-compose up --build
+
 Postgres:
   - implemented 3 linked tables;
   - request to database dosen't depend on the case of letters;
