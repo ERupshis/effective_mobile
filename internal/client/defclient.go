@@ -39,22 +39,23 @@ func (c *DefaultClient) DoGetURIWithQuery(ctx context.Context, url string, param
 }
 
 func (c *DefaultClient) makeEmptyBodyRequest(ctx context.Context, method string, url string) (int64, []byte, error) {
-	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer([]byte{}))
+	bufReq := bytes.NewBuffer([]byte{})
+	req, err := http.NewRequestWithContext(ctx, method, url, bufReq)
 	if err != nil {
 		return http.StatusInternalServerError, []byte{}, fmt.Errorf("request creation: %w", err)
 	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		return int64(resp.StatusCode), []byte{}, fmt.Errorf("client request error: %w", err)
+		return http.StatusBadRequest, []byte{}, fmt.Errorf("client request error: %w", err)
 	}
 	defer helpers.ExecuteWithLogError(resp.Body.Close, c.log)
 
-	buf := bytes.Buffer{}
-	_, err = buf.ReadFrom(resp.Body)
+	bufResp := bytes.Buffer{}
+	_, err = bufResp.ReadFrom(resp.Body)
 	if err != nil {
 		return http.StatusInternalServerError, []byte{}, fmt.Errorf("read response body: %w", err)
 	}
 
-	return int64(resp.StatusCode), buf.Bytes(), err
+	return int64(resp.StatusCode), bufResp.Bytes(), err
 }
