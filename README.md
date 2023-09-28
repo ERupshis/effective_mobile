@@ -37,8 +37,8 @@ Docker:
 
 Postgres:
   - implemented 3 linked tables;
-  - request to database dosen't depend on the case of letters;
-  - crud operation is made as single transaction;
+  - request to database doesn't depend on the case of letters;
+  - crud operations are made as single transactions;
   - select data is allowed by keys: id, name, surname, patronymic, age, gender, country;
   - supported pagination (page_num, page_size query keys);
   - added migrations.
@@ -60,8 +60,6 @@ Kafka:
   - kafka's messages parsing is implemented on controller conveyor (msgbroker->extradata->save);
   - all these controllers are independent and are communicating through channels;
   - added errors controller for collection error's messages from conveyor and send it back in fail topic.
- 
-  - docker compose up --build
 
 Postman collection is located in root repository:
 - https://github.com/ERupshis/effective_mobile/blob/main/Effective%20Mobile%20test.postman_collection.json
